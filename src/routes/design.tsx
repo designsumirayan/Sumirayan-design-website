@@ -62,44 +62,47 @@ function DesignPage() {
 
         {!items.length && <p className="text-center text-white/50 py-10">No projects yet. Add some from the admin panel.</p>}
         
-        {featured && (
-          <a href={featured.project_url ?? "#"} className="block group mb-24">
-            <div className="grid md:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/5 rounded-3xl p-6 md:p-10 transition-all duration-500 hover:bg-white/[0.04]">
-              <div className="md:col-span-8 aspect-[16/9] overflow-hidden rounded-2xl">
-                <img src={featured.cover_image} alt={featured.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-700" />
-              </div>
-              <div className="md:col-span-4 px-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-blue-400 mb-4 font-semibold">Featured Work</div>
-                <h2 className="serif text-4xl md:text-5xl text-white mb-4 leading-tight group-hover:text-pink-300 transition-colors duration-300">{featured.title}</h2>
-                <p className="text-white/60 leading-relaxed mb-6">{featured.description}</p>
-                <div className="flex flex-wrap gap-4 text-sm text-white/50">
-                  {featured.client && <span className="bg-white/5 px-3 py-1 rounded-full">{featured.client}</span>}
-                  <span className="bg-white/5 px-3 py-1 rounded-full text-white/80">{featured.category}</span>
+        {/* NAYA PREMIUM GRID SECTION - Starts Here */}
+        {items.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-10">
+            {items.map((p) => (
+              <a 
+                key={p.id} 
+                href={p.project_url ?? "#"} 
+                className="group relative block rounded-2xl overflow-hidden bg-[#0a0a0a] border border-white/10 shadow-lg transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:-translate-y-2"
+              >
+                {/* Image & Zoom Effect */}
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                  <img 
+                    src={p.cover_image} 
+                    alt={p.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110" 
+                  />
+                  {/* Premium Dark Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90" />
                 </div>
-              </div>
-            </div>
-          </a>
+
+                {/* Animated Text Content */}
+                <div className="absolute bottom-0 left-0 w-full p-5 flex flex-col justify-end translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
+                  <span className="text-[10px] uppercase tracking-widest text-pink-300 mb-2 opacity-0 transition-opacity duration-500 delay-100 group-hover:opacity-100">
+                    {p.category}
+                  </span>
+                  
+                  <h3 className="text-lg font-display font-semibold text-white mb-1 line-clamp-1">
+                    {p.title}
+                  </h3>
+                  
+                  {p.description && (
+                    <p className="text-xs text-white/70 line-clamp-2 opacity-0 transition-opacity duration-500 delay-150 group-hover:opacity-100">
+                      {p.description}
+                    </p>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
         )}
-
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {rest.map((p, i) => (
-            <a key={p.id} href={p.project_url ?? "#"} className={`group block ${i % 2 === 1 ? "md:mt-16" : ""}`}>
-              <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 relative border border-white/5">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                <img src={p.cover_image} alt={p.title} className="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700" />
-              </div>
-              <div className="mt-6 flex flex-col gap-2">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="serif text-2xl md:text-3xl text-white group-hover:text-blue-300 transition-colors">{p.title}</h3>
-                  <span className="text-xs uppercase tracking-[0.2em] text-white/40 shrink-0">{p.category}</span>
-                </div>
-                {p.description && <p className="text-white/50 text-sm leading-relaxed line-clamp-2">{p.description}</p>}
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-
+        {/* NAYA PREMIUM GRID SECTION - Ends Here */}
       <div className="relative max-w-7xl mx-auto px-6 py-32 border-t border-white/10">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-4xl md:text-5xl serif mb-6 text-white leading-tight">
