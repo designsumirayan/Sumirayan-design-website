@@ -60,30 +60,11 @@ export function EditorialShell({
       <Scene3D className="opacity-30" />
       <GlobalHeader />
 
-      <header className="relative mx-auto max-w-7xl px-6 pt-32 md:pt-36">
-        <div className="flex items-center justify-between text-[0.7rem] uppercase tracking-[0.28em] text-white/50">
-          <span>Sumirayan Design — Studio Journal</span>
-          <span>{issue ?? "Vol. MMXXVI"}</span>
-        </div>
-        <div className="rule-strong my-6" />
-        <div className="grid md:grid-cols-12 gap-8 items-end">
-          <div className="md:col-span-1">
-            <span className="serif text-6xl md:text-7xl leading-none" style={{ background: "var(--gradient-brand)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>§</span>
-          </div>
-          <div className="md:col-span-8">
-            <p className="text-[0.72rem] uppercase tracking-[0.32em] text-[oklch(0.78_0.12_258)] font-semibold">{eyebrow}</p>
-            <h1 className="serif mt-3 text-5xl md:text-7xl lg:text-8xl leading-[0.95] text-gradient-brand">{title}</h1>
-          </div>
-          <div className="md:col-span-3">
-            {intro && <p className="text-white/70 text-base leading-relaxed md:pl-6 md:border-l md:border-white/15">{intro}</p>}
-          </div>
-        </div>
-        <div className="rule mt-10" />
-      </header>
-
       <main className="relative mx-auto max-w-7xl px-6 py-16 md:py-20">{children}</main>
 
       <Footer />
     </div>
   );
 }
+
+
