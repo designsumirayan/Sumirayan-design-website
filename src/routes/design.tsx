@@ -27,13 +27,10 @@ function DesignPage() {
   const [featured, ...rest] = items;
 
   return (
-      {/* --- Animated Motion Graphics Hero Banner --- */}
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
-      {/* --- Animated Motion Graphics Hero Banner --- */}
       <div className="relative -mt-10 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
         
-        {/* Glowing Orbs (Motion Graphics Effect) */}
         <div className="absolute top-10 left-1/4 w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
         <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-pink-600/10 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none"></div>
         
@@ -49,9 +46,7 @@ function DesignPage() {
           </p>
         </div>
       </div>
-      {/* --- End Hero Banner --- */}
 
-      {/* --- Portfolio Grid Section --- */}
       <div className="max-w-7xl mx-auto px-6 pb-20 relative z-10">
         <div className="flex flex-wrap gap-2 mb-16 justify-center">
           {categories.map((c) => (
@@ -104,9 +99,7 @@ function DesignPage() {
           ))}
         </div>
       </div>
-      {/* --- End Portfolio Section --- */}
 
-      {/* --- 3D Services & Branding Section --- */}
       <div className="relative max-w-7xl mx-auto px-6 py-32 border-t border-white/10">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-4xl md:text-5xl serif mb-6 text-white leading-tight">
@@ -119,7 +112,6 @@ function DesignPage() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          {/* Card 1: Brand Identity */}
           <div className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/50 hover:-translate-y-3 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(59,130,246,0.2)] transition-all duration-500 overflow-hidden">
             <div className="text-blue-400 mb-6 group-hover:scale-110 group-hover:text-white transition-transform duration-500">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
@@ -128,7 +120,6 @@ function DesignPage() {
             <p className="text-white/50 text-sm leading-relaxed">From logo design and brand guidelines to core messaging, we create memorable identities.</p>
           </div>
 
-          {/* Card 2: Digital Marketing */}
           <div className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-pink-500/50 hover:-translate-y-3 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(236,72,153,0.2)] transition-all duration-500 overflow-hidden lg:mt-8">
             <div className="text-pink-400 mb-6 group-hover:scale-110 group-hover:text-white transition-transform duration-500">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>
@@ -137,7 +128,6 @@ function DesignPage() {
             <p className="text-white/50 text-sm leading-relaxed">Comprehensive performance marketing, social media management, and ad campaigns.</p>
           </div>
 
-          {/* Card 3: Packaging & Print */}
           <div className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-indigo-500/50 hover:-translate-y-3 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.2)] transition-all duration-500 overflow-hidden">
             <div className="text-indigo-400 mb-6 group-hover:scale-110 group-hover:text-white transition-transform duration-500">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -146,7 +136,6 @@ function DesignPage() {
             <p className="text-white/50 text-sm leading-relaxed">Product packaging, brochures, and outdoor advertising assets engineered to stand out.</p>
           </div>
 
-          {/* Card 4: Corporate Comm. */}
           <div className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-yellow-500/50 hover:-translate-y-3 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(234,179,8,0.2)] transition-all duration-500 overflow-hidden lg:mt-8">
             <div className="text-yellow-400 mb-6 group-hover:scale-110 group-hover:text-white transition-transform duration-500">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
@@ -157,7 +146,6 @@ function DesignPage() {
 
         </div>
       </div>
-      {/* --- End Services Section --- */}
 
     </EditorialShell>
   );
