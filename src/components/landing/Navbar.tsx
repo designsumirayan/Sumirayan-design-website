@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLocation } from "@tanstack/react-router";
 
 const links = [
   { href: "#about", label: "About" },
@@ -11,13 +12,19 @@ const links = [
 ];
 
 export function Navbar() {
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <motion.header
