@@ -25,7 +25,8 @@ function DesignPage() {
   const categories = useMemo(() => ["All", ...Array.from(new Set(data.map((d) => d.category)))], [data]);
   const items = cat === "All" ? data : data.filter((d) => d.category === cat);
   const [featured, ...rest] = items;
-  
+
+  return (
       {/* --- Animated Motion Graphics Hero Banner --- */}
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
