@@ -8,8 +8,8 @@ import { publicDesignItems } from "@/lib/content.functions";
 export const Route = createFileRoute("/design")({
   head: () => ({
     meta: [
-      { title: "Design Portfolio — Sumirayan Design" },
-      { name: "description", content: "Selected design work: branding, product, web and editorial by Sumirayan Design." },
+      { title: "Best Advertising Agency in Patna | Brand Strategy & Visual Identity" },
+      { name: "description", content: "Scale your brand with Patna's best advertising agency. We offer visual identity design, corporate branding, digital marketing campaigns, and packaging design." },
       { property: "og:title", content: "Design Portfolio — Sumirayan Design" },
       { property: "og:description", content: "Selected design work by Sumirayan Design." },
     ],
@@ -29,8 +29,8 @@ function DesignPage() {
   return (
     <EditorialShell
       eyebrow="Portfolio"
-      title={<>The <em className="not-italic text-[#c9a84c]">Design</em> Portfolio</>}
-      intro="A selection of identity systems, digital products and editorial work built for founders who care about the details."
+      title={"The Design & Branding Portfolio"}
+      intro="Strategic identity systems, high-converting digital marketing campaigns, and compelling visual storytelling crafted by the best advertising agency in Patna."
     >
       <div className="flex flex-wrap gap-2 mb-12">
         {categories.map((c) => (
@@ -80,6 +80,24 @@ function DesignPage() {
           </a>
         ))}
       </div>
+      <div className="mt-24 max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl serif mb-4 text-black">
+            Transform Your Business with Patna’s Best Advertising Agency
+          </h2>
+          <p className="mb-12 text-black/70 leading-relaxed text-lg">
+            To stand out in today’s competitive market, a brand needs more than just a logo—it needs a distinct visual voice. As a leading advertising agency in Patna, we combine creative strategy with deep market insights to build brands that capture attention and drive business growth.
+          </p>
+
+          <h2 className="text-3xl md:text-4xl serif mb-4 text-black">
+            Our Core Design & Branding Services
+          </h2>
+          <ul className="list-disc pl-5 text-black/70 space-y-4 text-lg mb-12">
+            <li><strong>Brand Identity & Strategy:</strong> From logo design and brand guidelines to core messaging, we create memorable brand identities that resonate with your target audience.</li>
+            <li><strong>Digital Marketing & Campaign Planning:</strong> Comprehensive performance marketing, social media management, and ad campaign execution designed for high ROI.</li>
+            <li><strong>Packaging & Print Design:</strong> Product packaging, brochures, corporate collaterals, and outdoor advertising assets engineered to stand out on shelves and streets.</li>
+            <li><strong>Corporate Communication:</strong> Professional pitch decks, annual reports, and brand storybooks that convey trust and authority.</li>
+          </ul>
+        </div>
     </EditorialShell>
   );
 }
