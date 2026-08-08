@@ -60,15 +60,26 @@ function DesignPage() {
           ))}
         </div>
 
-        <Scene3D className="opacity-30" />
-        <GlobalHeader />
-
-        <main className="relative mx-auto max-w-7xl px-6 py-16 md:py-20">{children}</main>
-
-        <Footer />
-      </div>
-    );
-}
+        {!items.length && <p className="text-center text-white/50 py-10">No projects yet. Add some from the admin panel.</p>}
+        
+        {featured && (
+          <a href={featured.project_url ?? "#"} className="block group mb-24">
+            <div className="grid md:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/5 rounded-3xl p-6 md:p-10 transition-all duration-500 hover:bg-white/[0.04]">
+              <div className="md:col-span-8 aspect-[16/9] overflow-hidden rounded-2xl">
+                <img src={featured.cover_image} alt={featured.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-700" />
+              </div>
+              <div className="md:col-span-4 px-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-blue-400 mb-4 font-semibold">Featured Work</div>
+                <h2 className="serif text-4xl md:text-5xl text-white mb-4 leading-tight group-hover:text-pink-300 transition-colors duration-300">{featured.title}</h2>
+                <p className="text-white/60 leading-relaxed mb-6">{featured.description}</p>
+                <div className="flex flex-wrap gap-4 text-sm text-white/50">
+                  {featured.client && <span className="bg-white/5 px-3 py-1 rounded-full">{featured.client}</span>}
+                  <span className="bg-white/5 px-3 py-1 rounded-full text-white/80">{featured.category}</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        )}
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {rest.map((p, i) => (
