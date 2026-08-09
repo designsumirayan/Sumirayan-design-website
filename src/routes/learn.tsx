@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { EditorialShell } from "@/components/site/EditorialShell";
 import { publicLearnCourses } from "@/lib/content.functions";
+// 👇 असली डेटाबेस फंक्शन जो Careers पेज में इस्तेमाल हुआ है 👇
+import { submitContact } from "@/lib/portal.functions";
 import { 
   GraduationCap, Clock, BookOpen, User, 
   ArrowRight, X, Sparkles, Laptop, BrainCircuit, Send 
@@ -30,18 +32,19 @@ function LearnPage() {
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // 100% Safe Mutation (बिना किसी बाहरी अननोन फंक्शन के ताकि Vercel क्रैश न हो)
+  // ─── REAL DATABASE MUTATION ───
   const enrollMut = useMutation({
-    mutationFn: async (formData: Record<string, string>) => {
-      // यह सिर्फ 2 सेकंड का लोडिंग इफ़ेक्ट देगा ताकि UI शानदार लगे (No Database Error)
-      return new Promise((resolve) => setTimeout(resolve, 2000));
-    },
+    mutationFn: (v: any) => submitContact({ data: v }),
     onSuccess: () => {
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
         setEnrollCourse(null);
       }, 3000); 
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || "Unknown Error";
+      alert("Error saving application:\n\n" + errorMessage);
     }
   });
 
@@ -49,13 +52,25 @@ function LearnPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     
-    const name = String(fd.get("name"));
-    const email = String(fd.get("email"));
-    const mobile = String(fd.get("mobile"));
-    const college = String(fd.get("college"));
-    const address = String(fd.get("address"));
+    const name = String(fd.get("name")).trim();
+    const email = String(fd.get("email")).trim();
+    const mobile = String(fd.get("mobile")).trim();
+    const college = String(fd.get("college")).trim();
+    const address = String(fd.get("address")).trim();
 
-    enrollMut.mutate({ name, email, mobile, college, address });
+    // Pure string format without emojis to prevent database encoding clash
+    const formattedMessage = `COURSE ENROLLMENT: ${enrollCourse?.title || 'General'}\n\nPhone: ${mobile}\nSchool/College: ${college}\n\nFull Address:\n${address}`;
+
+    // Ensure company string doesn't exceed database limit (max 200 chars)
+    const companyText = `Student: ${college}`.substring(0, 190);
+
+    // Sending data exactly as Supabase expects it
+    enrollMut.mutate({
+      name,
+      email,
+      company: companyText,
+      message: formattedMessage
+    });
   };
 
   return (
@@ -63,12 +78,13 @@ function LearnPage() {
       <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
         
         {/* --- Premium Hero Section --- */}
-        {/* Padding Top (pt-24 md:pt-32) fixed for perfect header spacing */}
+        {/* Padding Top fixed (pt-24 md:pt-32) so header doesn't overlap */}
         <div className="relative pt-24 md:pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center overflow-hidden">
           
           <div className="absolute top-10 left-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] animate-pulse pointer-events-none z-0"></div>
           <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none z-0"></div>
           
+          {/* Floating 3D Educational Elements */}
           <div className="absolute top-32 left-[15%] text-blue-500/20 animate-[bounce_6s_infinite] pointer-events-none z-0 hidden md:block">
             <Laptop className="w-16 h-16" />
           </div>
@@ -103,6 +119,7 @@ function LearnPage() {
                 key={course.id} 
                 className="group relative flex flex-col bg-[#050505] border border-white/10 rounded-[2rem] overflow-hidden hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] active:scale-[0.98] transition-all duration-500"
               >
+                {/* Fixed 16:9 Image container so courses aren't too big */}
                 <div className="relative w-full aspect-video overflow-hidden bg-white/5">
                   <img 
                     src={course.cover_image} 
@@ -173,7 +190,7 @@ function LearnPage() {
                   <GraduationCap className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl serif text-white mb-2">Application Sent!</h3>
-                <p className="text-white/60">Thank you for applying. Our team will review your application and contact you shortly.</p>
+                <p className="text-white/60">Thank you for applying. Our admission team will review your application and contact you shortly.</p>
               </div>
             ) : (
               <>
@@ -211,13 +228,13 @@ function LearnPage() {
 
                   <button 
                     type="submit" 
-                    disabled={enrollMut.isPending}
+                    disabled={submitMut.isPending}
                     className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-xl font-medium text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100"
                     style={{ background: "linear-gradient(to right, #2563eb, #059669)" }}
                   >
-                    {enrollMut.isPending ? "Submitting..." : "Submit Application"} <Send className="w-4 h-4 ml-1" />
+                    {submitMut.isPending ? "Submitting..." : "Submit Application"} <Send className="w-4 h-4 ml-1" />
                   </button>
-                  <p className="text-center text-[10px] text-white/40 mt-3">By submitting, your details will be processed securely.</p>
+                  <p className="text-center text-[10px] text-white/40 mt-3">By submitting, your details will be securely sent to our team.</p>
                 </form>
               </>
             )}
