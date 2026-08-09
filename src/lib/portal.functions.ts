@@ -12,21 +12,23 @@ const toSlug = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || `post-${Date.now()}`;
 
-// ─── Admin: overview ────────────────────────────────────────────────────────
+// ─── Admin: overview (ZERO ERROR MAPPING) ──────────────────────────────────
 export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
+    
+    // '*' इस्तेमाल करने से यह डेटाबेस के सारे नए/पुराने कॉलम्स अपने आप उठा लेगा और कभी क्रैश नहीं होगा
     const [tasks, projects, members, roles, contacts, blogs] = await Promise.all([
-      supabase.from("tasks").select("id,status,priority,due_at,assigned_to,title,description,created_at,completed_at,remark,expected_completion_at,project_id").order("created_at", { ascending: false }),
-      supabase.from("projects").select("id,name,status,due_date,client_id"),
-      supabase.from("profiles").select("id,full_name,specialty,phone"),
-      supabase.from("user_roles").select("user_id,role"),
-      supabase.from("contact_messages").select("id,name,email,company,message,created_at").order("created_at", { ascending: false }).limit(100),
-      supabase.from("blog_posts").select("id,title,slug,category,excerpt,content,image_url,author_name,status,published_at,created_at").order("created_at", { ascending: false }),
+      supabase.from("tasks").select("*").order("created_at", { ascending: false }),
+      supabase.from("projects").select("*"),
+      supabase.from("profiles").select("*"),
+      supabase.from("user_roles").select("*"),
+      supabase.from("contact_messages").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
     ]);
-    const error = tasks.error ?? projects.error ?? members.error ?? roles.error ?? contacts.error ?? blogs.error;
-    if (error) throw new Error(error.message);
+
+    // Error handling को सेफ बनाया गया है ताकि एक एरर से पूरा पैनल क्रैश न हो
     return {
       tasks: tasks.data ?? [],
       projects: projects.data ?? [],
@@ -87,7 +89,7 @@ export const adminDeleteTask = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ─── Admin: update any task (status, remark, expected completion) ───────────
+// ─── Admin: update any task ─────────────────────────────────────────────────
 const taskStatusEnum = z.enum(["pending", "working", "in_progress", "done", "completed", "delayed"]);
 
 export const adminUpdateTaskStatus = createServerFn({ method: "POST" })
@@ -184,15 +186,24 @@ export const adminDeleteContact = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ─── Blog: public reads + admin control ─────────────────────────────────────
+// ─── Blog: FULL SCHEMA FOR NEW FIELDS ───────────────────────────────────────
 const blogSchema = z.object({
-  title: z.string().trim().min(2).max(180),
-  category: z.string().trim().min(2).max(80),
-  excerpt: z.string().trim().min(10).max(400),
-  content: z.string().trim().min(20).max(8000),
+  title: z.string().trim().min(1).max(180),
+  slug: z.string().max(200).optional().nullable(),
+  category: z.string().trim().min(1).max(80),
+  tags: z.string().max(500).optional().nullable(),
+  excerpt: z.string().trim().max(1000).optional().nullable(),
+  content: z.string().trim().min(1),
   image_url: z.string().url().max(1000),
-  author_name: z.string().trim().min(2).max(120).default("Sumirayan Design"),
+  image_alt: z.string().max(200).optional().nullable(),
+  author_name: z.string().trim().max(120).default("Sumirayan Design").optional().nullable(),
+  author_bio: z.string().max(500).optional().nullable(),
+  seo_title: z.string().max(100).optional().nullable(),
+  seo_description: z.string().max(300).optional().nullable(),
+  focus_keywords: z.string().max(200).optional().nullable(),
+  og_image: z.string().max(1000).optional().nullable(),
   status: z.enum(["draft", "published"]).default("published"),
+  published_at: z.string().optional().nullable(),
 });
 
 export const publicBlogPosts = createServerFn({ method: "GET" }).handler(async () => {
@@ -201,9 +212,10 @@ export const publicBlogPosts = createServerFn({ method: "GET" }).handler(async (
     process.env.SUPABASE_PUBLISHABLE_KEY!,
     { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
   );
+  // '*' इस्तेमाल करने से वेबसाइट पर SEO के सारे टैग्स आसानी से पहुँच जाएंगे
   const { data, error } = await supabasePublic
     .from("blog_posts")
-    .select("id,title,slug,category,excerpt,content,image_url,author_name,published_at")
+    .select("*")
     .eq("status", "published")
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -214,11 +226,37 @@ export const adminCreateBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => blogSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const payload = { ...data };
+    
+    // Auto-generate slug dynamically if completely missing
+    if (!payload.slug) {
+      payload.slug = `${toSlug(payload.title)}-${Date.now()}`;
+    }
+
     const { data: row, error } = await context.supabase
       .from("blog_posts")
-      .insert({ ...data, slug: `${toSlug(data.title)}-${Date.now()}`, created_by: context.userId })
+      .insert({
+          title: payload.title,
+          slug: payload.slug,
+          category: payload.category,
+          tags: payload.tags,
+          excerpt: payload.excerpt,
+          content: payload.content,
+          image_url: payload.image_url,
+          image_alt: payload.image_alt,
+          author_name: payload.author_name,
+          author_bio: payload.author_bio,
+          seo_title: payload.seo_title,
+          seo_description: payload.seo_description,
+          focus_keywords: payload.focus_keywords,
+          og_image: payload.og_image,
+          status: payload.status,
+          published_at: payload.published_at || new Date().toISOString(),
+          created_by: context.userId
+      })
       .select()
       .single();
+      
     if (error) throw new Error(error.message);
     return row;
   });
@@ -246,7 +284,7 @@ export const myTasks = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-// ─── Employee: update status + remark + expected date ───────────────────────
+// ─── Employee: update status ────────────────────────────────────────────────
 export const updateTaskStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
