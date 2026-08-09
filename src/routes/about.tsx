@@ -15,9 +15,6 @@ import {
   Twitter 
 } from "lucide-react";
 
-// आपकी प्रोफाइल इमेज का सही पाथ (अगर पाथ अलग हो तो इसे बदल लें)
-import profileImg from "@/assets/Sumit (2).jpeg"; 
-
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
@@ -29,6 +26,26 @@ export const Route = createFileRoute("/about")({
 });
 
 function AboutPage() {
+  // सोशल मीडिया लिंक्स
+  const socialLinks = [
+    { Icon: Instagram, link: "#" },
+    { Icon: Facebook, link: "#" },
+    { Icon: Linkedin, link: "#" },
+    { Icon: Twitter, link: "#" }
+  ];
+
+  // आपकी स्किल्स
+  const expertise = [
+    { name: "Digital Business Growth Strategies", Icon: TrendingUp, color: "text-blue-400" },
+    { name: "Portrait Art & Illustration", Icon: Palette, color: "text-purple-400" },
+    { name: "Graphic Design & Branding", Icon: PenTool, color: "text-pink-400" },
+    { name: "Photography", Icon: Camera, color: "text-cyan-400" },
+    { name: "Video Editing", Icon: Video, color: "text-red-400" },
+  ];
+
+  // 👇 यहाँ पर अपनी प्रोफाइल फोटो का Cloudinary लिंक डालें 👇
+  const profileImageUrl = "https://res.cloudinary.com/iqvaoezc/image/upload/v1700000000/sumit-profile.jpg"; 
+
   return (
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
@@ -59,8 +76,9 @@ function AboutPage() {
             <div className="relative group rounded-[2.5rem] overflow-hidden border border-white/10 bg-white/5 p-2 shadow-2xl transition-all duration-500 hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)]">
               <div className="rounded-[2rem] overflow-hidden relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 pointer-events-none"></div>
+                {/* Profile Image with Download Protection */}
                 <img 
-                  src={profileImg} 
+                  src={profileImageUrl} 
                   alt="Sumit Singh" 
                   className="w-full h-auto object-cover aspect-[4/5] group-hover:scale-105 transition-transform duration-700 ease-out"
                   onContextMenu={(e) => e.preventDefault()}
@@ -69,22 +87,20 @@ function AboutPage() {
               </div>
             </div>
 
-            {/* Social Links */}
+            {/* Social Links with Hover & Touch Motion */}
             <div className="flex justify-center gap-4">
-              {[
-                { icon: Instagram, link: "#" },
-                { icon: Facebook, link: "#" },
-                { icon: Linkedin, link: "#" },
-                { icon: Twitter, link: "#" }
-              ].map((social, i) => (
-                <a 
-                  key={i}
-                  href={social.link} 
-                  className="w-12 h-12 rounded-full border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_10px_20px_-10px_rgba(255,255,255,0.2)] transition-all duration-300 active:scale-95"
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
+              {socialLinks.map((social, i) => {
+                const IconComponent = social.Icon;
+                return (
+                  <a 
+                    key={i}
+                    href={social.link} 
+                    className="w-12 h-12 rounded-full border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_10px_20px_-10px_rgba(255,255,255,0.2)] transition-all duration-300 active:scale-90"
+                  >
+                    <IconComponent className="w-5 h-5" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
@@ -92,7 +108,7 @@ function AboutPage() {
           <div className="lg:col-span-7 space-y-12">
             
             {/* Quote Section */}
-            <div className="relative p-8 md:p-10 rounded-3xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-xl overflow-hidden group hover:border-blue-500/30 transition-colors duration-500">
+            <div className="relative p-8 md:p-10 rounded-3xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-xl overflow-hidden group hover:border-blue-500/30 transition-colors duration-500 active:scale-[0.99]">
               <Quote className="absolute -right-6 -bottom-6 w-32 h-32 text-white/[0.03] rotate-12 group-hover:text-blue-500/[0.05] transition-colors duration-500" />
               <p className="relative z-10 text-2xl md:text-3xl serif italic text-white/90 leading-relaxed font-light">
                 "A perfect blend of artistic excellence and modern digital innovation."
@@ -114,7 +130,7 @@ function AboutPage() {
 
             {/* Education & Entrepreneurship Cards */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/50 hover:bg-white/[0.04] hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(59,130,246,0.15)] transition-all duration-500">
+              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/50 hover:bg-white/[0.04] md:hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(59,130,246,0.15)] active:scale-[0.98] transition-all duration-500">
                 <GraduationCap className="w-8 h-8 text-blue-400 mb-6" />
                 <h3 className="text-xl font-semibold text-white mb-4">Education</h3>
                 <ul className="space-y-3 text-sm text-white/60">
@@ -123,7 +139,7 @@ function AboutPage() {
                 </ul>
               </div>
 
-              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-pink-500/50 hover:bg-white/[0.04] hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(236,72,153,0.15)] transition-all duration-500">
+              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-pink-500/50 hover:bg-white/[0.04] md:hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(236,72,153,0.15)] active:scale-[0.98] transition-all duration-500">
                 <Briefcase className="w-8 h-8 text-pink-400 mb-6" />
                 <h3 className="text-xl font-semibold text-white mb-4">Entrepreneurship</h3>
                 <p className="text-sm text-white/60 leading-relaxed">
@@ -136,21 +152,18 @@ function AboutPage() {
             <div className="pt-6">
               <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40 mb-6">Core Expertise</h3>
               <div className="flex flex-wrap gap-3">
-                {[
-                  { name: "Digital Business Growth Strategies", icon: TrendingUp, color: "text-blue-400" },
-                  { name: "Portrait Art & Illustration", icon: Palette, color: "text-purple-400" },
-                  { name: "Graphic Design & Branding", icon: PenTool, color: "text-pink-400" },
-                  { name: "Photography", icon: Camera, color: "text-cyan-400" },
-                  { name: "Video Editing", icon: Video, color: "text-red-400" },
-                ].map((skill, index) => (
-                  <div 
-                    key={index}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 hover:border-white/30 text-sm text-white/80 hover:text-white transition-all duration-300 cursor-default active:scale-95"
-                  >
-                    <skill.icon className={`w-4 h-4 ${skill.color}`} />
-                    {skill.name}
-                  </div>
-                ))}
+                {expertise.map((skill, index) => {
+                  const IconComponent = skill.Icon;
+                  return (
+                    <div 
+                      key={index}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 hover:border-white/30 text-sm text-white/80 hover:text-white transition-all duration-300 cursor-default active:scale-95"
+                    >
+                      <IconComponent className={`w-4 h-4 ${skill.color}`} />
+                      {skill.name}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
