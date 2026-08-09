@@ -27,7 +27,7 @@ import {
 import {
   Trash2, Plus, CheckCircle2, Clock, Users, Mail,
   TrendingUp, ListTodo, ShieldCheck, Archive,
-  FileText, LayoutGrid,
+  FileText, LayoutGrid, Pencil
 } from "lucide-react";
 
 import logoUrl from "@/assets/sumirayan design.png";
@@ -86,7 +86,6 @@ function AdminPage() {
 
   const deleteMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: invalidate });
   
-  // FIX: Added assigned_to to the update mutation payload so existing tasks can be assigned
   const statusMut = useMutation({
     mutationFn: (v: { id: string; status?: TaskStatus; remark?: string | null; expected_completion_at?: string | null; assigned_to?: string | null }) => updateStatus({ data: v }),
     onSuccess: invalidate,
@@ -108,7 +107,6 @@ function AdminPage() {
   const roles = data?.roles ?? [];
   const contacts = data?.contacts ?? (data as any)?.messages ?? [];
   
-  // FIX: Added a fallback for `data.posts` in case the backend uses a different key name
   const blogs = data?.blogs ?? (data as any)?.posts ?? [];
 
   const memberName = (id: string | null) => members.find((m) => m.id === id)?.full_name ?? "Unassigned";
@@ -463,7 +461,6 @@ function TaskTable({
                   {t.description && <div className="text-[11px] text-white/50 mt-0.5 line-clamp-2 max-w-xs">{t.description}</div>}
                 </td>
                 
-                {/* FIX: Replaced read-only member name with a functional assignment dropdown */}
                 <td className="py-3 pr-4 text-white/70">
                   <select
                     value={t.assigned_to || ""}
@@ -599,7 +596,6 @@ function BlogTab({
                   </button>
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm text-white/65">{post.excerpt}</p>
-                {/* FIX: Added safe fallback to created_at so un-published drafts don't crash the renderer with 'Invalid Date' */}
                 <div className="mt-3 text-[11px] text-white/40">{post.author_name} · {new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString()}</div>
               </div>
             </article>
@@ -825,20 +821,33 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
   const queryKey = ["admin", "content", def.id];
 
   const { data = [], isLoading } = useQuery({ queryKey, queryFn: () => listFn() });
+  
+  // EDIT FEATURE STATE
+  const [editingItem, setEditingItem] = useState<any>(null);
 
   const createMut = useMutation({
     mutationFn: (input: Record<string, unknown>) => createFn({ data: input }),
     onSuccess: () => qc.invalidateQueries({ queryKey }),
-    onError: (e) => alert(e instanceof Error ? e.message : "Failed to create item."),
+    onError: (e) => alert(e instanceof Error ? e.message : "Failed to save item."),
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
+  const getDefault = (f: FieldDef) => {
+    if (!editingItem) return f.defaultValue;
+    const val = editingItem[f.name];
+    if (val == null) return "";
+    if (f.type === "datetime-local") return new Date(val).toISOString().slice(0, 16);
+    if (f.name === "features" && Array.isArray(val)) return val.join("\n");
+    return val;
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
       <form
+        key={editingItem?.id || 'new'}
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
@@ -864,22 +873,41 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
               payload[f.name] = v;
             }
           }
-          createMut.mutate(payload, {
-            onSuccess: () => (e.target as HTMLFormElement).reset(),
-          });
+
+          if (editingItem) {
+            // EDIT LOGIC: Delete old item and recreate with updated payload
+            deleteMut.mutate(editingItem.id, {
+              onSuccess: () => {
+                createMut.mutate(payload, {
+                  onSuccess: () => {
+                    setEditingItem(null);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                });
+              }
+            });
+          } else {
+            createMut.mutate(payload, {
+              onSuccess: () => (e.target as HTMLFormElement).reset(),
+            });
+          }
         }}
-        className="glass-strong rounded-2xl p-6 space-y-3"
+        className="glass-strong rounded-2xl p-6 space-y-3 relative"
       >
+        <div id="content-form-top" className="absolute -top-20" />
+        
         <h2 className="font-display text-xl flex items-center gap-2">
-          <Plus className="w-5 h-5 text-[#1f5fb7]" /> Add {def.label}
+          {editingItem ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : <Plus className="w-5 h-5 text-[#1f5fb7]" />} 
+          {editingItem ? `Edit ${def.label}` : `Add ${def.label}`}
         </h2>
+        
         {def.fields.map((f) => {
           const cls = "w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm";
           if (f.type === "textarea") {
             return (
               <label key={f.name} className="block">
                 <span className="text-xs text-white/60">{f.label}{f.required && " *"}</span>
-                <textarea name={f.name} required={f.required} placeholder={f.placeholder} rows={3} className={`mt-1 ${cls}`} />
+                <textarea name={f.name} required={f.required} placeholder={f.placeholder} defaultValue={getDefault(f)} rows={3} className={`mt-1 ${cls}`} />
               </label>
             );
           }
@@ -887,7 +915,7 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
             return (
               <label key={f.name} className="block">
                 <span className="text-xs text-white/60">{f.label}</span>
-                <select name={f.name} defaultValue={f.defaultValue} className={`mt-1 ${cls}`}>
+                <select name={f.name} defaultValue={getDefault(f)} className={`mt-1 ${cls}`}>
                   {f.options?.map((o) => <option key={o} value={o} className="bg-[#0a0f1e]">{o}</option>)}
                 </select>
               </label>
@@ -896,7 +924,7 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
           if (f.type === "checkbox") {
             return (
               <label key={f.name} className="flex items-center gap-2 text-sm text-white/80">
-                <input type="checkbox" name={f.name} defaultChecked={f.defaultValue === "true"} />
+                <input type="checkbox" name={f.name} defaultChecked={editingItem ? !!editingItem[f.name] : f.defaultValue === "true"} />
                 {f.label}
               </label>
             );
@@ -909,19 +937,29 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
                 type={f.type ?? "text"}
                 required={f.required}
                 placeholder={f.placeholder}
-                defaultValue={f.defaultValue}
+                defaultValue={getDefault(f)}
                 className={`mt-1 ${cls}`}
               />
             </label>
           );
         })}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end gap-3 pt-2">
+          {editingItem && (
+            <button
+              type="button"
+              onClick={() => setEditingItem(null)}
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition"
+            >
+              Cancel
+            </button>
+          )}
           <button
-            disabled={createMut.isPending}
+            disabled={createMut.isPending || deleteMut.isPending}
             className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
             style={{ background: "var(--gradient-brand)" }}
           >
-            <Plus className="w-4 h-4" /> {createMut.isPending ? "Saving…" : `Add to ${def.label}`}
+            {editingItem ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />} 
+            {createMut.isPending || deleteMut.isPending ? "Saving…" : (editingItem ? "Save Changes" : `Add to ${def.label}`)}
           </button>
         </div>
       </form>
@@ -932,11 +970,15 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
         {!isLoading && data.length === 0 && <p className="text-white/50 text-sm">Nothing yet — add your first item.</p>}
         <div className="space-y-3 max-h-[760px] overflow-auto pr-1">
           {data.map((row: any) => (
-            <article key={row.id} className={`group grid gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3 ${def.imageField ? "sm:grid-cols-[140px_1fr]" : ""} hover:bg-white/[0.07] transition`}>
+            <article key={row.id} className={`group grid gap-4 rounded-2xl border ${editingItem?.id === row.id ? "border-blue-500/50 bg-blue-500/10" : "border-white/10 bg-white/[0.04]"} p-3 ${def.imageField ? "sm:grid-cols-[140px_1fr]" : ""} hover:bg-white/[0.07] transition`}>
               {def.imageField && row[def.imageField] && (
-                <img src={row[def.imageField]} alt={row[def.titleField]} className="h-28 w-full rounded-xl object-cover sm:h-full" loading="lazy" />
+                row[def.imageField].match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                    <video src={row[def.imageField]} autoPlay loop muted playsInline className="h-28 w-full rounded-xl object-cover sm:h-full" />
+                ) : (
+                    <img src={row[def.imageField]} alt={row[def.titleField]} className="h-28 w-full rounded-xl object-cover sm:h-full" loading="lazy" />
+                )
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex flex-col h-full">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-semibold truncate">{row[def.titleField]}</h3>
@@ -944,13 +986,27 @@ function ContentKindPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
                       {(def.metaFields ?? []).map((m) => row[m]).filter((v) => v !== null && v !== undefined && v !== "").join(" · ")}
                     </div>
                   </div>
-                  <button
-                    onClick={() => { if (confirm("Delete this item?")) deleteMut.mutate(row.id); }}
-                    className="rounded-full p-2 text-white/45 hover:bg-red-500/15 hover:text-red-200"
-                    aria-label="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingItem(row);
+                        document.getElementById("content-form-top")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="rounded-full p-2 text-white/45 hover:bg-blue-500/20 hover:text-blue-300 transition"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { if (confirm("Delete this item?")) deleteMut.mutate(row.id); }}
+                      className="rounded-full p-2 text-white/45 hover:bg-red-500/15 hover:text-red-200 transition"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 {row.summary && <p className="mt-2 line-clamp-2 text-sm text-white/65">{row.summary}</p>}
                 {row.description && !row.summary && <p className="mt-2 line-clamp-2 text-sm text-white/65">{row.description}</p>}
