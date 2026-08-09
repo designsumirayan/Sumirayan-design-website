@@ -101,7 +101,8 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      {/* यहाँ बॉडी टैग में राइट-क्लिक ब्लॉक करने का कोड लगा दिया गया है */}
+      <body onContextMenu={(e) => e.preventDefault()}>
         {children}
         <Scripts />
       </body>
