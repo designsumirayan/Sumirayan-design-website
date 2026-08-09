@@ -52,15 +52,10 @@ function AdminPage() {
   
   const [tab, setTab] = useState<Tab>("overview");
 
-  // Fetching Main Dashboard Data
   const { data, isLoading, refetch } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
   const { data: perf } = useQuery({ queryKey: ["admin", "performance"], queryFn: () => perfFn() });
 
-  // Auto-Sync Function (Forces full reload to beat React Caching)
-  const forceSync = () => {
-    qc.invalidateQueries();
-    setTimeout(() => window.location.reload(), 300);
-  };
+  const forceSync = () => { qc.invalidateQueries(); setTimeout(() => window.location.reload(), 300); };
 
   const createMut = useMutation({ mutationFn: (input: any) => create({ data: input }), onSuccess: forceSync });
   const deleteMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: forceSync });
@@ -69,16 +64,34 @@ function AdminPage() {
   const removeRoleMut = useMutation({ mutationFn: (v: any) => removeRole({ data: v }), onSuccess: forceSync });
   const delContactMut = useMutation({ mutationFn: (id: string) => delContact({ data: { id } }), onSuccess: forceSync });
   
-  // Blog Mutations with Force Sync
   const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: forceSync, onError: (e) => alert("Error: " + e.message) });
   const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: forceSync });
 
-  // Extremely Robust Data Extraction (Zero Error Mapping)
+  // 🚀 AGGRESSIVE DATA EXTRACTOR (Zero Error Mapping)
   const tasks = Array.isArray(data?.tasks) ? data.tasks : [];
   const members = Array.isArray(data?.members) ? data.members : Array.isArray((data as any)?.profiles) ? (data as any).profiles : [];
   const roles = Array.isArray(data?.roles) ? data.roles : Array.isArray((data as any)?.user_roles) ? (data as any).user_roles : [];
   const contacts = Array.isArray(data?.contacts) ? data.contacts : Array.isArray((data as any)?.messages) ? (data as any).messages : [];
-  const blogs = Array.isArray(data?.blogs) ? data.blogs : Array.isArray((data as any)?.posts) ? (data as any).posts : Array.isArray((data as any)?.blog_posts) ? (data as any).blog_posts : [];
+  
+  // 🔥 HUNTER CODE FOR BLOGS: It will search the entire database response for your blogs
+  const blogs = useMemo(() => {
+    if (!data) return [];
+    if (Array.isArray((data as any).blogs)) return (data as any).blogs;
+    if (Array.isArray((data as any).posts)) return (data as any).posts;
+    if (Array.isArray((data as any).blog_posts)) return (data as any).blog_posts;
+    
+    // Deep scan inside the backend response
+    const allValues = Object.values(data);
+    for (const val of allValues) {
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
+        // If the object has 'excerpt' or 'content', it IS a blog! Catch it!
+        if ('excerpt' in val[0] || 'content' in val[0] || 'slug' in val[0]) {
+          return val;
+        }
+      }
+    }
+    return [];
+  }, [data]);
 
   const memberName = (id: string | null) => members.find((m: any) => m.id === id)?.full_name ?? "Unassigned";
   const userRoles = (uid: string) => roles.filter((r: any) => r.user_id === uid).map((r: any) => r.role as string);
@@ -118,7 +131,6 @@ function AdminPage() {
             <div className="text-xs text-white/50">Manage everything happening across the agency.</div>
             </div>
         </div>
-        {/* Manual Sync Button to fix cache issues */}
         <button onClick={() => { refetch(); qc.invalidateQueries(); setTimeout(() => window.location.reload(), 200); }} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-full transition active:scale-95 shadow-md">
             <RefreshCw className="w-4 h-4" /> Sync Database
         </button>
@@ -146,7 +158,7 @@ function AdminPage() {
         {tab === "overview" && ( <OverviewTab openTasks={openTasks} perf={perf} memberName={memberName} /> )}
         {tab === "portfolio" && <PortfolioContentTab />}
         {tab === "content" && <MiscContentTab />}
-        {tab === "blog" && ( <BlogTab posts={blogs} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
+        {tab === "blog" && ( <BlogTab posts={blogs} rawData={data} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
         {tab === "tasks" && ( <TasksTab openTasks={openTasks} oldTasks={oldTasks} members={members} memberName={memberName} onCreate={(v: any) => createMut.mutate(v)} onDelete={(id: string) => deleteMut.mutate(id)} onUpdate={(id: string, patch: any) => statusMut.mutate({ id, ...patch })} creating={createMut.isPending} /> )}
         {tab === "team" && ( <TeamTab members={members} userRoles={userRoles} onAssign={(user_id: string, role: Role) => assignMut.mutate({ user_id, role })} onRemove={(user_id: string, role: Role) => removeRoleMut.mutate({ user_id, role })} /> )}
         {tab === "contacts" && ( <ContactsTab contacts={contacts} onDelete={(id: string) => delContactMut.mutate(id)} /> )}
@@ -462,12 +474,12 @@ function TeamTab({ members, userRoles, onAssign, onRemove }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 6. BLOG TAB (With Form Mapping Bug Fix & Hard Reloads)
+// 6. BLOG TAB (With Data Integrity Check & Diagnostics)
 // ─────────────────────────────────────────────────────────────
 type BlogInput = { title: string; slug: string; category: string; tags?: string; excerpt: string; content: string; image_url: string; image_alt?: string; author_name: string; author_bio?: string; seo_title?: string; seo_description?: string; focus_keywords?: string; og_image?: string; status: "draft" | "published"; published_at?: string; };
 type BlogPost = BlogInput & { id: string; created_at: string };
 
-function BlogTab({ posts, creating, onCreate, onDelete }: any) {
+function BlogTab({ posts, rawData, creating, onCreate, onDelete }: any) {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   return (
       <div className="grid gap-6 xl:grid-cols-[1fr_380px] items-start">
@@ -568,7 +580,16 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
         <div className="glass-strong rounded-2xl p-4 md:p-6 flex flex-col h-[800px]">
           <h2 className="font-display text-xl mb-4 flex items-center gap-2 shrink-0">Manage Posts <span className="bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">{posts.length}</span></h2>
           <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-            {posts.length === 0 && (<div className="text-center py-10 border border-dashed border-white/10 rounded-xl"><FileText className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/50 text-sm">No blog posts yet.</p></div>)}
+            
+            {/* The Debug text will show what keys the database returned if it can't find the blog */}
+            {posts.length === 0 && (
+                <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
+                    <FileText className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                    <p className="text-white/50 text-sm">No blog posts yet.</p>
+                    <p className="text-white/20 text-[10px] mt-6 font-mono break-words">DB Keys: {rawData ? Object.keys(rawData).join(', ') : 'null'}</p>
+                </div>
+            )}
+
             {posts.map((post: any) => (
               <article key={post.id} className={`group rounded-xl border ${editingPost?.id === post.id ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/10 bg-white/[0.03]'} p-3 hover:bg-white/[0.06] transition flex flex-col gap-3`}>
                 <div className="aspect-[16/9] w-full rounded-lg overflow-hidden shrink-0 relative bg-black/50">
