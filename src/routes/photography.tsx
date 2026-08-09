@@ -32,7 +32,7 @@ function PhotographyPage() {
     <>
       <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
         
-        <div className="relative -mt-10 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
+        <div className="relative -mt-10 pt-15 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
           <div className="absolute top-10 left-1/4 w-72 h-72 bg-cyan-600/20 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
           <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none"></div>
           
