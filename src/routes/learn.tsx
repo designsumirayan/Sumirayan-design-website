@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { EditorialShell } from "@/components/site/EditorialShell";
 import { publicLearnCourses } from "@/lib/content.functions";
-// 👇 असली डेटाबेस फंक्शन जो Careers पेज में इस्तेमाल हुआ है 👇
+// असली डेटाबेस फंक्शन
 import { submitContact } from "@/lib/portal.functions";
 import { 
   GraduationCap, Clock, BookOpen, User, 
@@ -24,6 +24,9 @@ export const Route = createFileRoute("/learn")({
 function LearnPage() {
   const fetchCourses = useServerFn(publicLearnCourses);
   
+  // 👇 सबसे ज़रूरी फिक्स: डेटाबेस फंक्शन को सुरक्षित 'Server Function' में बदलना 👇
+  const submitMsg = useServerFn(submitContact);
+  
   const { data = [], isLoading } = useQuery({ 
     queryKey: ["public", "learn"], 
     queryFn: () => fetchCourses() 
@@ -32,9 +35,10 @@ function LearnPage() {
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // ─── REAL DATABASE MUTATION ───
+  // ─── 100% SAFE DATABASE MUTATION ───
   const enrollMut = useMutation({
-    mutationFn: (v: any) => submitContact({ data: v }),
+    // अब यह सीधे सर्वर को कॉल करेगा, जिससे पेज क्रैश नहीं होगा!
+    mutationFn: (v: any) => submitMsg({ data: v }),
     onSuccess: () => {
       setIsSuccess(true);
       setTimeout(() => {
@@ -52,19 +56,20 @@ function LearnPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     
+    // .trim() यूज़र द्वारा गलती से डाले गए खाली स्पेस को हटा देगा
     const name = String(fd.get("name")).trim();
     const email = String(fd.get("email")).trim();
     const mobile = String(fd.get("mobile")).trim();
     const college = String(fd.get("college")).trim();
     const address = String(fd.get("address")).trim();
 
-    // Pure string format without emojis to prevent database encoding clash
+    // एडमिन पैनल के लिए मैसेज का फॉर्मेट
     const formattedMessage = `COURSE ENROLLMENT: ${enrollCourse?.title || 'General'}\n\nPhone: ${mobile}\nSchool/College: ${college}\n\nFull Address:\n${address}`;
 
-    // Ensure company string doesn't exceed database limit (max 200 chars)
+    // डेटाबेस लिमिट से बचने के लिए नाम को छोटा रखना
     const companyText = `Student: ${college}`.substring(0, 190);
 
-    // Sending data exactly as Supabase expects it
+    // यह डेटाबेस में सबमिट कर देगा
     enrollMut.mutate({
       name,
       email,
@@ -78,13 +83,11 @@ function LearnPage() {
       <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
         
         {/* --- Premium Hero Section --- */}
-        {/* Padding Top fixed (pt-24 md:pt-32) so header doesn't overlap */}
         <div className="relative pt-24 md:pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center overflow-hidden">
           
           <div className="absolute top-10 left-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] animate-pulse pointer-events-none z-0"></div>
           <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none z-0"></div>
           
-          {/* Floating 3D Educational Elements */}
           <div className="absolute top-32 left-[15%] text-blue-500/20 animate-[bounce_6s_infinite] pointer-events-none z-0 hidden md:block">
             <Laptop className="w-16 h-16" />
           </div>
@@ -119,7 +122,6 @@ function LearnPage() {
                 key={course.id} 
                 className="group relative flex flex-col bg-[#050505] border border-white/10 rounded-[2rem] overflow-hidden hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] active:scale-[0.98] transition-all duration-500"
               >
-                {/* Fixed 16:9 Image container so courses aren't too big */}
                 <div className="relative w-full aspect-video overflow-hidden bg-white/5">
                   <img 
                     src={course.cover_image} 
@@ -228,11 +230,11 @@ function LearnPage() {
 
                   <button 
                     type="submit" 
-                    disabled={submitMut.isPending}
+                    disabled={enrollMut.isPending}
                     className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-xl font-medium text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100"
                     style={{ background: "linear-gradient(to right, #2563eb, #059669)" }}
                   >
-                    {submitMut.isPending ? "Submitting..." : "Submit Application"} <Send className="w-4 h-4 ml-1" />
+                    {enrollMut.isPending ? "Submitting..." : "Submit Application"} <Send className="w-4 h-4 ml-1" />
                   </button>
                   <p className="text-center text-[10px] text-white/40 mt-3">By submitting, your details will be securely sent to our team.</p>
                 </form>
