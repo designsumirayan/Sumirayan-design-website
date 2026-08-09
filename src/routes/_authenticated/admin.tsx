@@ -19,7 +19,7 @@ import {
 } from "@/lib/content.functions";
 import {
   Trash2, Plus, CheckCircle2, Clock, Users, Mail, TrendingUp, ListTodo, ShieldCheck, Archive,
-  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap
+  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap, RefreshCw
 } from "lucide-react";
 
 import logoUrl from "@/assets/sumirayan design.png";
@@ -52,25 +52,33 @@ function AdminPage() {
   
   const [tab, setTab] = useState<Tab>("overview");
 
-  const { data, isLoading } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
+  // Fetching Main Dashboard Data
+  const { data, isLoading, refetch } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
   const { data: perf } = useQuery({ queryKey: ["admin", "performance"], queryFn: () => perfFn() });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin"] });
+  // Auto-Sync Function (Forces full reload to beat React Caching)
+  const forceSync = () => {
+    qc.invalidateQueries();
+    setTimeout(() => window.location.reload(), 300);
+  };
 
-  const createMut = useMutation({ mutationFn: (input: any) => create({ data: input }), onSuccess: invalidate });
-  const deleteMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: invalidate });
-  const statusMut = useMutation({ mutationFn: (v: any) => updateStatus({ data: v }), onSuccess: invalidate });
-  const assignMut = useMutation({ mutationFn: (v: any) => assignRole({ data: v }), onSuccess: invalidate });
-  const removeRoleMut = useMutation({ mutationFn: (v: any) => removeRole({ data: v }), onSuccess: invalidate });
-  const delContactMut = useMutation({ mutationFn: (id: string) => delContact({ data: { id } }), onSuccess: invalidate });
-  const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: invalidate, onError: (e) => alert(e.message) });
-  const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: invalidate });
+  const createMut = useMutation({ mutationFn: (input: any) => create({ data: input }), onSuccess: forceSync });
+  const deleteMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: forceSync });
+  const statusMut = useMutation({ mutationFn: (v: any) => updateStatus({ data: v }), onSuccess: forceSync });
+  const assignMut = useMutation({ mutationFn: (v: any) => assignRole({ data: v }), onSuccess: forceSync });
+  const removeRoleMut = useMutation({ mutationFn: (v: any) => removeRole({ data: v }), onSuccess: forceSync });
+  const delContactMut = useMutation({ mutationFn: (id: string) => delContact({ data: { id } }), onSuccess: forceSync });
+  
+  // Blog Mutations with Force Sync
+  const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: forceSync, onError: (e) => alert("Error: " + e.message) });
+  const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: forceSync });
 
-  const tasks = data?.tasks ?? [];
-  const members = data?.members ?? (data as any)?.profiles ?? [];
-  const roles = data?.roles ?? (data as any)?.user_roles ?? [];
-  const contacts = data?.contacts ?? (data as any)?.messages ?? (data as any)?.contact_messages ?? [];
-  const blogs = data?.blogs ?? (data as any)?.posts ?? (data as any)?.blog_posts ?? [];
+  // Extremely Robust Data Extraction (Zero Error Mapping)
+  const tasks = Array.isArray(data?.tasks) ? data.tasks : [];
+  const members = Array.isArray(data?.members) ? data.members : Array.isArray((data as any)?.profiles) ? (data as any).profiles : [];
+  const roles = Array.isArray(data?.roles) ? data.roles : Array.isArray((data as any)?.user_roles) ? (data as any).user_roles : [];
+  const contacts = Array.isArray(data?.contacts) ? data.contacts : Array.isArray((data as any)?.messages) ? (data as any).messages : [];
+  const blogs = Array.isArray(data?.blogs) ? data.blogs : Array.isArray((data as any)?.posts) ? (data as any).posts : Array.isArray((data as any)?.blog_posts) ? (data as any).blog_posts : [];
 
   const memberName = (id: string | null) => members.find((m: any) => m.id === id)?.full_name ?? "Unassigned";
   const userRoles = (uid: string) => roles.filter((r: any) => r.user_id === uid).map((r: any) => r.role as string);
@@ -84,37 +92,44 @@ function AdminPage() {
     { k: "Open tasks", v: openTasks.length, icon: Clock, tab: "tasks" as Tab },
     { k: "Completed", v: oldTasks.length, icon: CheckCircle2, tab: "tasks" as Tab },
     { k: "Inbox", v: contacts.length, icon: Mail, tab: "contacts" as Tab },
-    { k: "Content", v: "Manage", icon: FolderOpen, tab: "content" as Tab },
+    { k: "Blogs", v: blogs.length, icon: FileText, tab: "blog" as Tab },
   ];
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "overview", label: "Overview", icon: TrendingUp },
+    { id: "portfolio", label: "Project Folders", icon: FolderOpen },
+    { id: "content", label: "Misc Content", icon: LayoutGrid },
+    { id: "blog", label: "Blog", icon: FileText },
     { id: "tasks", label: "Tasks", icon: ListTodo },
     { id: "team", label: "Team & Roles", icon: ShieldCheck },
     { id: "contacts", label: "Messages", icon: Mail },
-    { id: "content", label: "Site Content", icon: FolderOpen },
-    { id: "blog", label: "Blog", icon: FileText },
     { id: "performance", label: "Performance", icon: TrendingUp },
   ];
 
   return (
     <DashboardShell role="Admin" title="Command Center" subtitle="Tasks, team roles, client messages and monthly performance.">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <div className="grid place-items-center h-12 w-12 shrink-0 rounded-xl bg-white">
-          <img src={logoUrl} alt="Sumirayan Design" className="h-6 w-auto object-contain" onContextMenu={(e) => e.preventDefault()} />
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <div className="flex items-center gap-4">
+            <div className="grid place-items-center h-12 w-12 shrink-0 rounded-xl bg-white">
+            <img src={logoUrl} alt="Sumirayan Design" className="h-6 w-auto object-contain" onContextMenu={(e) => e.preventDefault()} />
+            </div>
+            <div>
+            <div className="font-display text-lg">Sumirayan Design — Studio Operations</div>
+            <div className="text-xs text-white/50">Manage everything happening across the agency.</div>
+            </div>
         </div>
-        <div>
-          <div className="font-display text-lg">Sumirayan Design — Studio Operations</div>
-          <div className="text-xs text-white/50">Manage everything happening across the agency.</div>
-        </div>
+        {/* Manual Sync Button to fix cache issues */}
+        <button onClick={() => { refetch(); qc.invalidateQueries(); setTimeout(() => window.location.reload(), 200); }} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-full transition active:scale-95 shadow-md">
+            <RefreshCw className="w-4 h-4" /> Sync Database
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {stats.map((s) => (
-          <button key={s.k} onClick={() => setTab(s.tab)} className="text-left glass-strong rounded-2xl p-4 md:p-6 hover:bg-white/[0.06] transition">
+          <button key={s.k} onClick={() => setTab(s.tab)} className="text-left glass-strong rounded-2xl p-4 md:p-6 hover:bg-white/[0.06] transition border border-transparent hover:border-white/10">
             <s.icon className="w-5 h-5 text-[#1f5fb7]" />
             <p className="mt-2 text-[10px] md:text-xs uppercase tracking-[0.16em] text-white/50">{s.k}</p>
-            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading && s.v !== "Manage" ? "…" : s.v}</p>
+            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading ? "…" : s.v}</p>
           </button>
         ))}
       </div>
@@ -129,11 +144,12 @@ function AdminPage() {
 
       <div className="mt-8 space-y-8">
         {tab === "overview" && ( <OverviewTab openTasks={openTasks} perf={perf} memberName={memberName} /> )}
+        {tab === "portfolio" && <PortfolioContentTab />}
+        {tab === "content" && <MiscContentTab />}
+        {tab === "blog" && ( <BlogTab posts={blogs} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
         {tab === "tasks" && ( <TasksTab openTasks={openTasks} oldTasks={oldTasks} members={members} memberName={memberName} onCreate={(v: any) => createMut.mutate(v)} onDelete={(id: string) => deleteMut.mutate(id)} onUpdate={(id: string, patch: any) => statusMut.mutate({ id, ...patch })} creating={createMut.isPending} /> )}
         {tab === "team" && ( <TeamTab members={members} userRoles={userRoles} onAssign={(user_id: string, role: Role) => assignMut.mutate({ user_id, role })} onRemove={(user_id: string, role: Role) => removeRoleMut.mutate({ user_id, role })} /> )}
         {tab === "contacts" && ( <ContactsTab contacts={contacts} onDelete={(id: string) => delContactMut.mutate(id)} /> )}
-        {tab === "blog" && ( <BlogTab posts={blogs} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
-        {tab === "content" && <ContentTab />}
         {tab === "performance" && <PerformanceTab perf={perf} />}
       </div>
     </DashboardShell>
@@ -446,7 +462,7 @@ function TeamTab({ members, userRoles, onAssign, onRemove }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 6. BLOG TAB
+// 6. BLOG TAB (With Form Mapping Bug Fix & Hard Reloads)
 // ─────────────────────────────────────────────────────────────
 type BlogInput = { title: string; slug: string; category: string; tags?: string; excerpt: string; content: string; image_url: string; image_alt?: string; author_name: string; author_bio?: string; seo_title?: string; seo_description?: string; focus_keywords?: string; og_image?: string; status: "draft" | "published"; published_at?: string; };
 type BlogPost = BlogInput & { id: string; created_at: string };
@@ -473,7 +489,7 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
               status: (fd.get("status") as "draft" | "published") || "published",
               published_at: fd.get("published_at") ? new Date(String(fd.get("published_at"))).toISOString() : new Date().toISOString(),
             };
-            if(editingPost) { onDelete(editingPost.id); setTimeout(() => { onCreate(payload); setEditingPost(null); window.scrollTo({top:0}); }, 500); } 
+            if(editingPost) { onDelete(editingPost.id); setTimeout(() => { onCreate(payload); setEditingPost(null); }, 300); } 
             else { onCreate(payload); e.currentTarget.reset(); }
           }}
           className="glass-strong rounded-2xl p-4 md:p-6 space-y-8"
@@ -565,7 +581,7 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
                   <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                     <div className="text-[10px] text-white/40 truncate">{new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric'})}</div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => setEditingPost(post)} className="rounded-md p-1.5 text-white/50 hover:bg-blue-500/20 hover:text-blue-300 transition" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => { setEditingPost(post); window.scrollTo({top:0}); }} className="rounded-md p-1.5 text-white/50 hover:bg-blue-500/20 hover:text-blue-300 transition" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
                       <button onClick={() => {if(confirm("Delete this blog post?")) onDelete(post.id);}} className="rounded-md p-1.5 text-white/50 hover:bg-red-500/20 hover:text-red-300 transition" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
@@ -579,16 +595,12 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 7. CONTENT TAB (ALL 7 SECTIONS REUNITED)
+// 7. PORTFOLIO FOLDERS TAB (Design, Photo, Art, IT)
 // ─────────────────────────────────────────────────────────────
-type ContentCategory = "design" | "photography" | "art" | "it" | "learn" | "events" | "careers";
+type ContentCategory = "design" | "photography" | "art" | "it";
+type FieldDef = { name: string; label: string; type?: "text" | "textarea" | "number" | "url" | "datetime-local" | "select" | "checkbox"; required?: boolean; placeholder?: string; options?: string[]; defaultValue?: string; helpText?: string; halfWidth?: boolean; };
 
-type FieldDef = {
-  name: string; label: string; type?: "text" | "textarea" | "number" | "url" | "datetime-local" | "select" | "checkbox";
-  required?: boolean; placeholder?: string; options?: string[]; defaultValue?: string; helpText?: string; halfWidth?: boolean;
-};
-
-const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; description: string; fields: FieldDef[]; imageField: string; titleField: string; metaFields?: string[]; }[] = [
+const PORTFOLIO_KINDS: { id: ContentCategory; label: string; icon: any; description: string; fields: FieldDef[]; imageField: string; titleField: string; metaFields?: string[]; }[] = [
   {
     id: "design", label: "Design Portfolio", icon: Pencil, imageField: "cover_image", titleField: "title", description: "Brand identity, packaging, and graphic design projects.", metaFields: ["category", "client", "year"],
     fields: [
@@ -621,7 +633,37 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "cover_image", label: "Cover Image URL *", type: "url", required: true }, { name: "description", label: "Full Case Study", type: "textarea" }, { name: "gallery_images", label: "Screenshots / Gallery (URLs)", type: "textarea" }, { name: "features", label: "Key Features / Tech Stack (One per line)", type: "textarea" },
       { name: "project_url", label: "Live Project URL", type: "url", halfWidth: true }, { name: "slug", label: "URL Slug", halfWidth: true }, { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
-  },
+  }
+];
+
+function PortfolioContentTab() {
+  const [kind, setKind] = useState<ContentCategory>("design");
+  const def = PORTFOLIO_KINDS.find((k) => k.id === kind)!;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar scroll-smooth">
+        {PORTFOLIO_KINDS.map((k) => (
+          <button key={k.id} onClick={() => setKind(k.id)} className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm transition font-medium ${kind === k.id ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5"}`}>
+            <k.icon className={`w-4 h-4 ${kind === k.id ? "text-black" : "text-white/40"}`} /> {k.label}
+          </button>
+        ))}
+      </div>
+      <div className="mb-4 pl-2 border-l-2 border-blue-500">
+          <h3 className="text-white font-medium text-lg">{def.label} Folders</h3>
+          <p className="text-white/50 text-sm">{def.description}</p>
+      </div>
+      <ContentManagerPanel key={kind} def={def} category="portfolio" />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 8. MISC CONTENT TAB (Learn, Events, Careers)
+// ─────────────────────────────────────────────────────────────
+type MiscCategory = "learn" | "events" | "careers";
+
+const MISC_KINDS: { id: MiscCategory; label: string; icon: any; description: string; fields: FieldDef[]; imageField: string; titleField: string; metaFields?: string[]; }[] = [
   {
     id: "learn", label: "Courses", icon: GraduationCap, imageField: "cover_image", titleField: "title", description: "Manage learning modules and courses.", metaFields: ["level", "duration"],
     fields: [
@@ -646,14 +688,14 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
   }
 ];
 
-function ContentTab() {
-  const [kind, setKind] = useState<ContentCategory>("design");
-  const def = CONTENT_KINDS.find((k) => k.id === kind)!;
+function MiscContentTab() {
+  const [kind, setKind] = useState<MiscCategory>("learn");
+  const def = MISC_KINDS.find((k) => k.id === kind)!;
 
   return (
     <div className="space-y-6">
       <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar scroll-smooth">
-        {CONTENT_KINDS.map((k) => (
+        {MISC_KINDS.map((k) => (
           <button key={k.id} onClick={() => setKind(k.id)} className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm transition font-medium ${kind === k.id ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5"}`}>
             <k.icon className={`w-4 h-4 ${kind === k.id ? "text-black" : "text-white/40"}`} /> {k.label}
           </button>
@@ -663,12 +705,13 @@ function ContentTab() {
           <h3 className="text-white font-medium text-lg">{def.label} Manager</h3>
           <p className="text-white/50 text-sm">{def.description}</p>
       </div>
-      <FolderManagerPanel key={kind} def={def} />
+      <ContentManagerPanel key={kind} def={def} category="misc" />
     </div>
   );
 }
 
-const FOLDER_FNS: Record<ContentCategory, { list: any; create: any; del: any }> = {
+// --- Shared Manager Panel for Both Content Tabs ---
+const CONTENT_FNS: Record<string, { list: any; create: any; del: any }> = {
   design: { list: publicDesignItems, create: adminCreateDesign, del: adminDeleteDesign },
   photography: { list: publicPhotographyItems, create: adminCreatePhoto, del: adminDeletePhoto },
   art: { list: publicArtItems, create: adminCreateArt, del: adminDeleteArt },
@@ -678,8 +721,8 @@ const FOLDER_FNS: Record<ContentCategory, { list: any; create: any; del: any }> 
   careers: { list: publicCareers, create: adminCreateCareer, del: adminDeleteCareer },
 };
 
-function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
-  const fns = FOLDER_FNS[def.id];
+function ContentManagerPanel({ def, category }: { def: any, category: string }) {
+  const fns = CONTENT_FNS[def.id];
   const listFn = useServerFn(fns.list);
   const createFn = useServerFn(fns.create);
   const deleteFn = useServerFn(fns.del);
@@ -689,8 +732,10 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
   const { data = [], isLoading } = useQuery({ queryKey, queryFn: () => listFn() });
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  const createMut = useMutation({ mutationFn: (input: Record<string, unknown>) => createFn({ data: input }), onSuccess: () => qc.invalidateQueries({ queryKey }), onError: (e) => alert(e instanceof Error ? e.message : "Failed to save item.") });
-  const deleteMut = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey }) });
+  const forceSync = () => { qc.invalidateQueries(); setTimeout(() => window.location.reload(), 300); };
+
+  const createMut = useMutation({ mutationFn: (input: Record<string, unknown>) => createFn({ data: input }), onSuccess: forceSync, onError: (e) => alert(e.message) });
+  const deleteMut = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }), onSuccess: forceSync });
 
   const getDefault = (f: FieldDef) => {
     if (!editingItem) return f.defaultValue;
@@ -706,7 +751,7 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_400px] items-start">
       <form
-        key={editingItem?.id || 'new_folder'}
+        key={editingItem?.id || 'new_item'}
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
@@ -734,20 +779,23 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
             }
           }
 
-          if (editingItem) { deleteMut.mutate(editingItem.id, { onSuccess: () => { createMut.mutate(payload, { onSuccess: () => { setEditingItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); } }); } }); } 
-          else { createMut.mutate(payload, { onSuccess: () => (e.target as HTMLFormElement).reset() }); }
+          if (editingItem) { deleteMut.mutate(editingItem.id, { onSuccess: () => { setTimeout(() => createMut.mutate(payload), 300); } }); } 
+          else { createMut.mutate(payload); }
         }}
         className="glass-strong rounded-2xl p-4 md:p-6 space-y-6 relative"
       >
         <div id="folder-form-top" className="absolute -top-20" />
         
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h2 className="font-display text-xl flex items-center gap-2">{editingItem ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : <FolderOpen className="w-5 h-5 text-[#1f5fb7]" />} {editingItem ? `Edit Item` : `Create New Item`}</h2>
+            <h2 className="font-display text-xl flex items-center gap-2">
+            {editingItem ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : (category === 'portfolio' ? <FolderOpen className="w-5 h-5 text-[#1f5fb7]" /> : <Plus className="w-5 h-5 text-[#1f5fb7]" />)} 
+            {editingItem ? `Edit Item` : `Create New Item`}
+            </h2>
             {editingItem && (<button type="button" onClick={() => setEditingItem(null)} className="text-xs text-white/50 hover:text-white bg-white/5 px-3 py-1 rounded-full">Cancel Edit</button>)}
         </div>
         
         <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
-            {def.fields.map((f) => {
+            {def.fields.map((f: any) => {
             const cls = "w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-sm focus:border-blue-500/50 outline-none transition";
             const wrapperCls = f.halfWidth ? "sm:col-span-1" : "sm:col-span-2";
             
@@ -765,7 +813,7 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
                 <label key={f.name} className={`block ${wrapperCls}`}>
                     <span className="text-xs font-medium text-white/70 mb-1 block">{f.label}</span>
                     <select name={f.name} defaultValue={getDefault(f)} className={`${cls} text-white/90`}>
-                    {f.options?.map((o) => <option key={o} value={o} className="bg-[#0a0f1e]">{o}</option>)}
+                    {f.options?.map((o: any) => <option key={o} value={o} className="bg-[#0a0f1e]">{o}</option>)}
                     </select>
                 </label>
                 );
