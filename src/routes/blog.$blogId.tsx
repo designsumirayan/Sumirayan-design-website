@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Tag, Globe, Volume2, SquareSquare, ZoomIn, ZoomOut, PauseCircle } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { ArrowLeft, Calendar, User, Share2, Tag, Globe, Volume2, ZoomIn, ZoomOut, Square } from "lucide-react";
 import { publicBlogPosts } from "@/lib/portal.functions";
 import { PageShell } from "@/components/site/PageShell"; 
 
@@ -10,7 +10,20 @@ export const Route = createFileRoute("/blog/$blogId")({
   component: BlogPostDetail,
 });
 
-function BlogPostDetail() {
+// Supported Languages for Translation Lookup
+const LANGUAGES = [
+  { code: "en", name: "English (Original)" },
+  { code: "hi", name: "हिंदी (Hindi)" },
+  { code: "bn", name: "বাংলা (Bengali)" },
+  { code: "ta", name: "தமிழ் (Tamil)" },
+  { code: "te", name: "తెలుగు (Telugu)" },
+  { code: "ml", name: "മലയാളം (Malayalam)" },
+  { code: "es", name: "Español (Spanish)" },
+  { code: "fr", name: "Français (French)" },
+  { code: "de", name: "Deutsch (German)" },
+];
+
+export function BlogPostDetail() {
   const { blogId } = Route.useParams();
   const blogsFn = useServerFn(publicBlogPosts);
   
@@ -25,12 +38,38 @@ function BlogPostDetail() {
 
   const post: any = posts.find((p: any) => p.slug === blogId || p.id === blogId);
 
-  // --- Advanced Reading Features State ---
+  // Reading & UI States
   const [readingProgress, setReadingProgress] = useState(0);
-  const [fontSize, setFontSize] = useState(18); // Default font size
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [fontSize, setFontSize] = useState(18);
+  const [targetLang, setTargetLang] = useState("en");
+  const [translatedTitle, setTranslatedTitle] = useState("");
+  const [translatedExcerpt, setTranslatedExcerpt] = useState("");
+  const [translatedContent, setTranslatedContent] = useState("");
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  // 1. Reading Progress Bar Logic
+  // Text-to-Speech (Human-like clear audio) States
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      synthRef.current = window.speechSynthesis;
+    }
+    return () => {
+      if (synthRef.current) synthRef.current.cancel();
+    };
+  }, []);
+
+  // Update original text when post loads
+  useEffect(() => {
+    if (post) {
+      setTranslatedTitle(post.title || "");
+      setTranslatedExcerpt(post.excerpt || "");
+      setTranslatedContent(post.content || "");
+    }
+  }, [post]);
+
+  // Reading Progress Bar
   useEffect(() => {
     const updateProgress = () => {
       const currentScroll = window.scrollY;
@@ -43,52 +82,65 @@ function BlogPostDetail() {
     return () => window.removeEventListener("scroll", updateProgress);
   }, []);
 
-  // 2. Google Translate Initialization
-  useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any).googleTranslateElementInit) {
-      const addScript = document.createElement("script");
-      addScript.setAttribute("src", "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit");
-      addScript.setAttribute("async", "true");
-      document.body.appendChild(addScript);
-      
-      (window as any).googleTranslateElementInit = () => {
-        new (window as any).google.translate.TranslateElement({
-          pageLanguage: 'en',
-          layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-          autoDisplay: false
-        }, 'google_translate_element');
-      };
+  // Professional Translation Handler using MyMemory Free API
+  const handleTranslate = async (langCode: string) => {
+    setTargetLang(langCode);
+    if (langCode === "en") {
+      setTranslatedTitle(post.title);
+      setTranslatedExcerpt(post.excerpt);
+      setTranslatedContent(post.content);
+      return;
     }
-  }, []);
 
-  // 3. Text-to-Speech (Read Aloud) Logic
-  const toggleSpeech = () => {
-    if (!post?.content) return;
-    
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      // Strip HTML tags to get pure text for reading
-      const plainText = post.content.replace(/<[^>]+>/g, '') || post.excerpt;
-      const utterance = new SpeechSynthesisUtterance(plainText);
-      
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
+    setIsTranslating(true);
+    try {
+      const translateText = async (text: string) => {
+        if (!text) return "";
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${langCode}`);
+        const json = await res.json();
+        return json.responseData?.translatedText || text;
+      };
+
+      const newTitle = await translateText(post.title);
+      const newExcerpt = await translateText(post.excerpt);
+      const newContent = await translateText(post.content);
+
+      setTranslatedTitle(newTitle);
+      setTranslatedExcerpt(newExcerpt);
+      setTranslatedContent(newContent);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
-  // Cleanup speech on unmount
-  useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
+  // Clear & Natural Human-like Audio Reader
+  const toggleSpeech = () => {
+    if (!synthRef.current) return;
+
+    if (isSpeaking) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
+    } else {
+      const plainText = `${translatedTitle}. ${translatedExcerpt}. ${translatedContent.replace(/<[^>]+>/g, '')}`;
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      
+      // Select best clear voice available in browser
+      const voices = synthRef.current.getVoices();
+      const preferredVoice = voices.find(v => v.lang.startsWith(targetLang) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Enhanced'))) || voices.find(v => v.lang.startsWith(targetLang)) || voices[0];
+      
+      if (preferredVoice) utterance.voice = preferredVoice;
+      utterance.rate = 0.95; // Slightly slower for better clarity
+      utterance.pitch = 1.0;
+
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      synthRef.current.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -97,7 +149,6 @@ function BlogPostDetail() {
           <div className="animate-pulse flex flex-col items-center gap-6">
             <div className="w-full h-96 bg-white/5 rounded-3xl"></div>
             <div className="w-3/4 h-12 bg-white/5 rounded-lg"></div>
-            <div className="w-1/2 h-6 bg-white/5 rounded-lg"></div>
           </div>
         </div>
       </PageShell>
@@ -119,20 +170,11 @@ function BlogPostDetail() {
   return (
     <PageShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
-      {/* --- Hide Ugly Google Translate Top Bar CSS --- */}
       <style dangerouslySetInnerHTML={{__html: `
-        .skiptranslate iframe { display: none !important; }
-        body { top: 0px !important; }
-        .goog-te-gadget-simple { background-color: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 6px 12px !important; border-radius: 50px !important; font-family: inherit !important; color: white !important; }
-        .goog-te-gadget-simple .goog-te-menu-value span { color: white !important; font-size: 12px !important; }
-        .goog-te-gadget-simple .goog-te-menu-value img { display: none !important; }
-        
-        /* Premium Text Selection Highlight */
         ::selection { background: rgba(59, 130, 246, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
-        ::-moz-selection { background: rgba(59, 130, 246, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
       `}} />
 
-      {/* --- Reading Progress Bar --- */}
+      {/* Reading Progress Bar */}
       <div 
         className="fixed top-0 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-400 to-cyan-400 z-[100] transition-all duration-150 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
         style={{ width: `${readingProgress}%` }}
@@ -140,20 +182,32 @@ function BlogPostDetail() {
 
       <article className="max-w-5xl mx-auto px-6 pb-32 pt-10 relative z-10">
         
-        {/* Top Controls: Back & Translate */}
+        {/* Top Controls: Back & Custom Multi-Language Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
             <Link to="/blog" className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium">
-            <ArrowLeft className="w-4 h-4" /> Back to all articles
+              <ArrowLeft className="w-4 h-4" /> Back to all articles
             </Link>
             
-            {/* Translate Widget Wrapper */}
-            <div className="flex items-center gap-2 text-xs text-white/70">
-                <Globe className="w-4 h-4 text-blue-400" /> Translate:
-                <div id="google_translate_element"></div>
+            {/* Custom Language Dropdown (Includes Hindi, Bengali, Tamil, Telugu, Malayalam, etc.) */}
+            <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
+                <Globe className="w-4 h-4 text-blue-400" />
+                <span className="text-xs text-white/70">Language:</span>
+                <select 
+                    value={targetLang} 
+                    onChange={(e) => handleTranslate(e.target.value)}
+                    className="bg-transparent text-white text-xs font-medium outline-none cursor-pointer"
+                >
+                    {LANGUAGES.map(lang => (
+                        <option key={lang.code} value={lang.code} className="bg-[#0a0f1e] text-white">
+                            {lang.name}
+                        </option>
+                    ))}
+                </select>
+                {isTranslating && <span className="text-[10px] text-blue-400 animate-pulse">Translating...</span>}
             </div>
         </div>
 
-        {/* ─── Header Section ─── */}
+        {/* Header Section */}
         <header className="mb-12 text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
             <span className="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -166,15 +220,15 @@ function BlogPostDetail() {
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-semibold text-white leading-[1.15] mb-6">
-            {post.title}
+            {translatedTitle}
           </h1>
           
           <p className="text-lg md:text-xl text-white/60 leading-relaxed max-w-3xl">
-            {post.excerpt}
+            {translatedExcerpt}
           </p>
         </header>
 
-        {/* ─── Cover Image ─── */}
+        {/* Cover Image */}
         <div className="w-full aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden mb-16 bg-white/5 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
           <img 
             src={post.image_url} 
@@ -184,35 +238,33 @@ function BlogPostDetail() {
           />
         </div>
 
-        {/* ─── Advanced Reading Toolbar (Sticky) ─── */}
-        <div className="sticky top-4 z-50 mb-10 mx-auto max-w-fit flex items-center gap-2 bg-[#050505]/80 backdrop-blur-xl border border-white/10 p-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+        {/* Advanced Reading Toolbar (Sticky Audio & Font Adjuster) */}
+        <div className="sticky top-4 z-50 mb-10 mx-auto max-w-fit flex items-center gap-2 bg-[#050505]/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
             <button 
                 onClick={toggleSpeech}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${isSpeaking ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${isSpeaking ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white'}`}
             >
-                {isSpeaking ? <PauseCircle className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                {isSpeaking ? 'Pause Audio' : 'Listen'}
+                {isSpeaking ? <Square className="w-3.5 h-3.5 fill-current" /> : <Volume2 className="w-4 h-4" />}
+                {isSpeaking ? 'Stop Reading' : 'Listen to Article'}
             </button>
             <div className="w-px h-6 bg-white/10 mx-1"></div>
-            <button onClick={() => setFontSize(f => Math.max(14, f - 2))} className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-full transition" title="Decrease Font Size"><ZoomOut className="w-4 h-4" /></button>
-            <span className="text-xs text-white/50 font-mono w-6 text-center">{fontSize}</span>
-            <button onClick={() => setFontSize(f => Math.min(26, f + 2))} className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-full transition" title="Increase Font Size"><ZoomIn className="w-4 h-4" /></button>
+            <button onClick={() => setFontSize(f => Math.max(14, f - 2))} className="p-2 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition" title="Decrease Font Size"><ZoomOut className="w-4 h-4" /></button>
+            <span className="text-xs text-white/60 font-mono w-6 text-center">{fontSize}px</span>
+            <button onClick={() => setFontSize(f => Math.min(26, f + 2))} className="p-2 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition" title="Increase Font Size"><ZoomIn className="w-4 h-4" /></button>
         </div>
 
-        {/* ─── Content & Sidebar Grid ─── */}
+        {/* Content & Sidebar Grid */}
         <div className="grid lg:grid-cols-[1fr_300px] gap-12 items-start">
           
-          {/* Main Content (Dynamic Font Size) */}
+          {/* Main Content */}
           <div 
             className="prose prose-invert max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-blue-400 prose-img:rounded-2xl prose-p:leading-[1.8] transition-all duration-300"
             style={{ fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} 
+            dangerouslySetInnerHTML={{ __html: translatedContent.replace(/\n/g, '<br />') }} 
           />
 
           {/* Sidebar Info Panel */}
           <aside className="sticky top-28 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-            
-            {/* Author */}
             <div>
               <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <User className="w-4 h-4" /> Written By
@@ -226,7 +278,6 @@ function BlogPostDetail() {
               {post.author_bio && <p className="text-xs text-white/50 leading-relaxed">{post.author_bio}</p>}
             </div>
 
-            {/* Tags */}
             {post.tags && (
               <div className="pt-6 border-t border-white/10">
                 <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -242,7 +293,6 @@ function BlogPostDetail() {
               </div>
             )}
 
-            {/* Share Button */}
             <div className="pt-6 border-t border-white/10">
               <button 
                 onClick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied to clipboard!'))} 
