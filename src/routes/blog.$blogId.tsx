@@ -10,7 +10,7 @@ export const Route = createFileRoute("/blog/$blogId")({
   component: BlogPostDetail,
 });
 
-// Supported Languages for Translation Lookup
+// Supported Languages
 const LANGUAGES = [
   { code: "en", name: "English (Original)" },
   { code: "hi", name: "हिंदी (Hindi)" },
@@ -38,20 +38,34 @@ export function BlogPostDetail() {
 
   const post: any = posts.find((p: any) => p.slug === blogId || p.id === blogId);
 
-  // Reading & UI States
+  // States
   const [readingProgress, setReadingProgress] = useState(0);
   const [fontSize, setFontSize] = useState(18);
   const [targetLang, setTargetLang] = useState("en");
-  const [translatedTitle, setTranslatedTitle] = useState("");
-  const [translatedExcerpt, setTranslatedExcerpt] = useState("");
-  const [translatedContent, setTranslatedContent] = useState("");
-  const [isTranslating, setIsTranslating] = useState(false);
 
-  // Text-to-Speech (Human-like clear audio) States
+  // Audio States
   const [isSpeaking, setIsSpeaking] = useState(false);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
+  // 1. Initialize Google Translate Script
   useEffect(() => {
+    // Check if script already exists to avoid duplicates
+    if (!document.querySelector('script[src*="translate_a/element.js"]')) {
+      const addScript = document.createElement("script");
+      addScript.setAttribute(
+        "src",
+        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+      );
+      document.body.appendChild(addScript);
+      
+      (window as any).googleTranslateElementInit = () => {
+        new (window as any).google.translate.TranslateElement(
+          { pageLanguage: "en", autoDisplay: false },
+          "google_translate_element"
+        );
+      };
+    }
+
     if (typeof window !== "undefined") {
       synthRef.current = window.speechSynthesis;
     }
@@ -60,16 +74,7 @@ export function BlogPostDetail() {
     };
   }, []);
 
-  // Update original text when post loads
-  useEffect(() => {
-    if (post) {
-      setTranslatedTitle(post.title || "");
-      setTranslatedExcerpt(post.excerpt || "");
-      setTranslatedContent(post.content || "");
-    }
-  }, [post]);
-
-  // Reading Progress Bar
+  // 2. Reading Progress Bar
   useEffect(() => {
     const updateProgress = () => {
       const currentScroll = window.scrollY;
@@ -82,40 +87,20 @@ export function BlogPostDetail() {
     return () => window.removeEventListener("scroll", updateProgress);
   }, []);
 
-  // Professional Translation Handler using MyMemory Free API
-  const handleTranslate = async (langCode: string) => {
+  // 3. Perfect Translation Method using Google's native Cookie
+  const handleTranslate = (langCode: string) => {
     setTargetLang(langCode);
-    if (langCode === "en") {
-      setTranslatedTitle(post.title);
-      setTranslatedExcerpt(post.excerpt);
-      setTranslatedContent(post.content);
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      const translateText = async (text: string) => {
-        if (!text) return "";
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${langCode}`);
-        const json = await res.json();
-        return json.responseData?.translatedText || text;
-      };
-
-      const newTitle = await translateText(post.title);
-      const newExcerpt = await translateText(post.excerpt);
-      const newContent = await translateText(post.content);
-
-      setTranslatedTitle(newTitle);
-      setTranslatedExcerpt(newExcerpt);
-      setTranslatedContent(newContent);
-    } catch (err) {
-      console.error("Translation error:", err);
-    } finally {
-      setIsTranslating(false);
-    }
+    
+    // Google translate uses the 'googtrans' cookie to translate the DOM natively without breaking HTML
+    const cookieString = `/en/${langCode}`;
+    document.cookie = `googtrans=${cookieString}; path=/`;
+    document.cookie = `googtrans=${cookieString}; domain=.${window.location.hostname}; path=/`;
+    
+    // Reload to apply native DOM translation perfectly without UI glitches
+    window.location.reload();
   };
 
-  // Clear & Natural Human-like Audio Reader
+  // 4. Smart Text-to-Speech (Reads directly from the translated DOM)
   const toggleSpeech = () => {
     if (!synthRef.current) return;
 
@@ -123,15 +108,15 @@ export function BlogPostDetail() {
       synthRef.current.cancel();
       setIsSpeaking(false);
     } else {
-      const plainText = `${translatedTitle}. ${translatedExcerpt}. ${translatedContent.replace(/<[^>]+>/g, '')}`;
-      const utterance = new SpeechSynthesisUtterance(plainText);
+      // Fetch exact translated text visible on screen to read
+      const articleText = document.getElementById("translated-article-content")?.innerText || "";
+      const utterance = new SpeechSynthesisUtterance(articleText);
       
-      // Select best clear voice available in browser
       const voices = synthRef.current.getVoices();
-      const preferredVoice = voices.find(v => v.lang.startsWith(targetLang) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Enhanced'))) || voices.find(v => v.lang.startsWith(targetLang)) || voices[0];
+      const preferredVoice = voices.find(v => v.lang.startsWith(targetLang) && (v.name.includes('Natural') || v.name.includes('Google'))) || voices.find(v => v.lang.startsWith(targetLang)) || voices[0];
       
       if (preferredVoice) utterance.voice = preferredVoice;
-      utterance.rate = 0.95; // Slightly slower for better clarity
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
 
       utterance.onend = () => setIsSpeaking(false);
@@ -172,7 +157,13 @@ export function BlogPostDetail() {
       
       <style dangerouslySetInnerHTML={{__html: `
         ::selection { background: rgba(59, 130, 246, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+        /* Hides the default ugly Google Translate top bar */
+        .skiptranslate > iframe.skiptranslate { display: none !important; }
+        body { top: 0px !important; }
       `}} />
+
+      {/* Hidden Div required by Google Translate */}
+      <div id="google_translate_element" className="hidden"></div>
 
       {/* Reading Progress Bar */}
       <div 
@@ -180,15 +171,15 @@ export function BlogPostDetail() {
         style={{ width: `${readingProgress}%` }}
       />
 
-      <article className="max-w-5xl mx-auto px-6 pb-32 pt-10 relative z-10">
+      <article className="max-w-5xl mx-auto px-6 pb-32 pt-10 relative z-10" id="translated-article-content">
         
         {/* Top Controls: Back & Custom Multi-Language Selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 notranslate">
             <Link to="/blog" className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium">
               <ArrowLeft className="w-4 h-4" /> Back to all articles
             </Link>
             
-            {/* Custom Language Dropdown (Includes Hindi, Bengali, Tamil, Telugu, Malayalam, etc.) */}
+            {/* Custom Language Dropdown */}
             <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
                 <Globe className="w-4 h-4 text-blue-400" />
                 <span className="text-xs text-white/70">Language:</span>
@@ -203,28 +194,27 @@ export function BlogPostDetail() {
                         </option>
                     ))}
                 </select>
-                {isTranslating && <span className="text-[10px] text-blue-400 animate-pulse">Translating...</span>}
             </div>
         </div>
 
         {/* Header Section */}
         <header className="mb-12 text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
-            <span className="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest">
+            <span className="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest notranslate">
               {post.category}
             </span>
-            <span className="text-white/40 text-sm flex items-center gap-1.5">
+            <span className="text-white/40 text-sm flex items-center gap-1.5 notranslate">
               <Calendar className="w-4 h-4" /> 
               {new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-semibold text-white leading-[1.15] mb-6">
-            {translatedTitle}
+            {post.title}
           </h1>
           
           <p className="text-lg md:text-xl text-white/60 leading-relaxed max-w-3xl">
-            {translatedExcerpt}
+            {post.excerpt}
           </p>
         </header>
 
@@ -238,8 +228,8 @@ export function BlogPostDetail() {
           />
         </div>
 
-        {/* Advanced Reading Toolbar (Sticky Audio & Font Adjuster) */}
-        <div className="sticky top-4 z-50 mb-10 mx-auto max-w-fit flex items-center gap-2 bg-[#050505]/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+        {/* Advanced Reading Toolbar */}
+        <div className="sticky top-4 z-50 mb-10 mx-auto max-w-fit flex items-center gap-2 bg-[#050505]/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.6)] notranslate">
             <button 
                 onClick={toggleSpeech}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${isSpeaking ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white'}`}
@@ -260,11 +250,11 @@ export function BlogPostDetail() {
           <div 
             className="prose prose-invert max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-blue-400 prose-img:rounded-2xl prose-p:leading-[1.8] transition-all duration-300"
             style={{ fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: translatedContent.replace(/\n/g, '<br />') }} 
+            dangerouslySetInnerHTML={{ __html: post.content }} 
           />
 
           {/* Sidebar Info Panel */}
-          <aside className="sticky top-28 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
+          <aside className="sticky top-28 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm notranslate">
             <div>
               <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <User className="w-4 h-4" /> Written By
