@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Briefcase, MapPin, Clock, ArrowUpRight, CheckCircle2, X, Send } from "lucide-react";
 import { publicCareers } from "@/lib/content.functions";
-import { submitContact } from "@/lib/portal.functions"; // Existing function to save applications to Inbox
+import { submitContact } from "@/lib/portal.functions";
 import { EditorialShell } from "@/components/site/EditorialShell";
 import { useState } from "react";
 
@@ -24,11 +24,10 @@ function CareersPage() {
     queryFn: () => fetchCareers() 
   });
 
-  // State to manage the Application Modal
   const [applyingFor, setApplyingFor] = useState<any>(null);
   const [formSuccess, setFormSuccess] = useState(false);
 
-  // Reusing submitContact to send Job Applications directly to Admin Inbox
+  // Form Submission Logic
   const submitMut = useMutation({
     mutationFn: (v: any) => submitContact({ data: v }),
     onSuccess: () => {
@@ -38,40 +37,45 @@ function CareersPage() {
         setFormSuccess(false);
       }, 3000);
     },
-    onError: () => {
-      alert("Something went wrong. Please try again or email us directly.");
+    onError: (err: any) => {
+      //  EXACT ERROR DISPLAY: यह हमें बताएगा कि असल में डेटाबेस में क्या दिक्कत आ रही है
+      const errorMessage = err?.message || "Unknown Error";
+      alert("Error saving form:\n\n" + errorMessage);
     }
   });
 
   const handleApplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget as HTMLFormElement);
-    const name = String(fd.get("name"));
-    const email = String(fd.get("email"));
-    const phone = String(fd.get("phone"));
-    const portfolio = String(fd.get("portfolio"));
-    const coverLetter = String(fd.get("coverLetter"));
+    
+    // .trim() removes any accidental extra spaces added by user
+    const name = String(fd.get("name")).trim();
+    const email = String(fd.get("email")).trim();
+    const phone = String(fd.get("phone")).trim();
+    const portfolio = String(fd.get("portfolio")).trim();
+    const coverLetter = String(fd.get("coverLetter")).trim();
 
-    // Formatted message to easily identify it in the Admin Inbox
-    const formattedMessage = `JOB APPLICATION: ${applyingFor.title} (${applyingFor.department})\n\n📞 Phone: ${phone}\n🔗 Portfolio/Resume: ${portfolio}\n\n📝 Cover Letter / Details:\n${coverLetter}`;
+    //  REMOVED EMOJIS: Pure string format to prevent any database encoding clash
+    const formattedMessage = `JOB APPLICATION: ${applyingFor?.title || 'General'} (${applyingFor?.department || 'Creative'})\n\nPhone: ${phone}\nPortfolio/Resume: ${portfolio}\n\nCover Letter / Details:\n${coverLetter}`;
+
+    // Ensure company string doesn't exceed database limit (max 200 chars)
+    const companyText = `Applicant: ${applyingFor?.title || 'Job'}`.substring(0, 190);
 
     submitMut.mutate({
       name,
       email,
-      company: `Applicant: ${applyingFor.title}`, // Appears in company field in Admin Panel
+      company: companyText,
       message: formattedMessage
     });
   };
 
-  // Safe Data Mapping
   const jobs = Array.isArray(rawJobs) ? rawJobs : [];
   const openJobs = jobs.filter((job: any) => job.is_open !== false);
 
   return (
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
-      {/* ─── HERO SECTION (Spacing Fixed) ─── */}
-      {/* pt-32 ensures it stays below the navigation bar */}
+      {/* ─── HERO SECTION ─── */}
       <div className="relative pt-32 md:pt-40 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-cyan-600/10 rounded-full blur-[100px] animate-pulse delay-700 pointer-events-none"></div>
@@ -158,10 +162,8 @@ function CareersPage() {
       {/* ─── APPLICATION FORM MODAL (POP-UP) ─── */}
       {applyingFor && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          {/* Modal Container */}
           <div className="w-full max-w-lg bg-[#0a0f1e] border border-white/10 rounded-[2rem] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
             
-            {/* Modal Header */}
             <div className="p-6 md:p-8 border-b border-white/5 relative shrink-0">
               <button 
                 onClick={() => setApplyingFor(null)}
@@ -170,12 +172,11 @@ function CareersPage() {
                 <X className="w-5 h-5" />
               </button>
               <span className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold mb-2 block">Application Form</span>
-              <h2 className="text-2xl md:text-3xl font-display font-semibold text-white leading-tight">
+              <h2 className="text-2xl md:text-3xl font-display font-semibold text-white leading-tight pr-10">
                 {applyingFor.title}
               </h2>
             </div>
 
-            {/* Modal Body / Form */}
             <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
               {formSuccess ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
