@@ -23,14 +23,15 @@ function DesignPage() {
   const [cat, setCat] = useState<string>("All");
 
   const categories = useMemo(() => ["All", ...Array.from(new Set(data.map((d) => d.category)))], [data]);
+  
+  // हमने "Featured" वाला बड़ा लेआउट हटा दिया है, अब सारे प्रोजेक्ट्स एक बराबर सुंदर ग्रिड में दिखेंगे
   const items = cat === "All" ? data : data.filter((d) => d.category === cat);
-  const [featured, ...rest] = items;
 
   return (
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
+      {/* --- Animated Motion Graphics Hero Banner --- */}
       <div className="relative -mt-10 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
-        
         <div className="absolute top-10 left-1/4 w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
         <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-pink-600/10 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none"></div>
         
@@ -47,13 +48,14 @@ function DesignPage() {
         </div>
       </div>
 
+      {/* --- NEW Compact Premium Grid Section --- */}
       <div className="max-w-7xl mx-auto px-6 pb-20 relative z-10">
         <div className="flex flex-wrap gap-2 mb-16 justify-center">
           {categories.map((c) => (
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`chip transition-all duration-300 px-5 py-2 rounded-full text-sm border ${cat === c ? "bg-white text-black font-medium scale-105 border-white" : "bg-transparent hover:bg-white/10 text-white/70 border-white/20"}`}
+              className={`chip transition-all duration-300 px-5 py-2 rounded-full text-sm border ${cat === c ? "bg-white text-black font-medium scale-105 border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]" : "bg-transparent hover:bg-white/10 text-white/70 border-white/20"}`}
             >
               {c}
             </button>
@@ -62,44 +64,36 @@ function DesignPage() {
 
         {!items.length && <p className="text-center text-white/50 py-10">No projects yet. Add some from the admin panel.</p>}
         
-        {featured && (
-          <a href={featured.project_url ?? "#"} className="block group mb-24">
-            <div className="grid md:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/5 rounded-3xl p-6 md:p-10 transition-all duration-500 hover:bg-white/[0.04]">
-              <div className="md:col-span-8 aspect-[16/9] overflow-hidden rounded-2xl">
-                <img src={featured.cover_image} alt={featured.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-700" />
+        {/* The New Grid: 1 col on phone, 2 on tablet, 3 on laptop, 4 on big screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {items.map((p) => (
+            <a key={p.id} href={p.project_url ?? "#"} className="group relative block overflow-hidden rounded-2xl bg-white/[0.02] border border-white/10 hover:border-blue-400/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(59,130,246,0.25)]">
+              
+              {/* Aspect Ratio 4:3 (इसे छोटा और परफेक्ट बॉक्स बनाएगा) */}
+              <div className="aspect-[4/3] overflow-hidden bg-[#0a0a0a] relative">
+                {/* टेक्स्ट को हमेशा पढ़ने लायक बनाने के लिए हल्का डार्क ग्रेडिएंट */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
+                <img src={p.cover_image} alt={p.title} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-700 ease-out" />
               </div>
-              <div className="md:col-span-4 px-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-blue-400 mb-4 font-semibold">Featured Work</div>
-                <h2 className="serif text-4xl md:text-5xl text-white mb-4 leading-tight group-hover:text-pink-300 transition-colors duration-300">{featured.title}</h2>
-                <p className="text-white/60 leading-relaxed mb-6">{featured.description}</p>
-                <div className="flex flex-wrap gap-4 text-sm text-white/50">
-                  {featured.client && <span className="bg-white/5 px-3 py-1 rounded-full">{featured.client}</span>}
-                  <span className="bg-white/5 px-3 py-1 rounded-full text-white/80">{featured.category}</span>
+              
+              {/* Text Container: टच/होवर करने पर स्मूथ मोशन एनिमेशन */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+                <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                  <span className="inline-block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-blue-400 mb-2">
+                    {p.category}
+                  </span>
+                  <h3 className="serif text-xl md:text-2xl text-white leading-tight mb-1">{p.title}</h3>
+                  {/* डिस्क्रिप्शन सिर्फ तब दिखेगा जब कोई कार्ड पर टच या होवर करेगा */}
+                  {p.description && <p className="text-white/50 text-xs leading-relaxed line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">{p.description}</p>}
                 </div>
-              </div>
-            </div>
-          </a>
-        )}
-
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {rest.map((p, i) => (
-            <a key={p.id} href={p.project_url ?? "#"} className={`group block ${i % 2 === 1 ? "md:mt-16" : ""}`}>
-              <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 relative border border-white/5">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                <img src={p.cover_image} alt={p.title} className="w-full h-full object-cover group-hover:scale-[1.05] transition duration-700" />
-              </div>
-              <div className="mt-6 flex flex-col gap-2">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="serif text-2xl md:text-3xl text-white group-hover:text-blue-300 transition-colors">{p.title}</h3>
-                  <span className="text-xs uppercase tracking-[0.2em] text-white/40 shrink-0">{p.category}</span>
-                </div>
-                {p.description && <p className="text-white/50 text-sm leading-relaxed line-clamp-2">{p.description}</p>}
               </div>
             </a>
           ))}
         </div>
       </div>
+      {/* --- End Grid Section --- */}
 
+      {/* --- 3D Services & Branding Section --- */}
       <div className="relative max-w-7xl mx-auto px-6 py-32 border-t border-white/10">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-4xl md:text-5xl serif mb-6 text-white leading-tight">
