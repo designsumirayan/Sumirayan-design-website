@@ -1093,8 +1093,8 @@ function LocationSection() {
 
             <div className="space-y-4">
               {[
-                { icon: <MapPin className="w-5 h-5 text-white shrink-0 mt-0.5" />, label: "Studio Address", val: "Sumirayan Design Pvt. Ltd., Boring Road, Patna, Bihar — 800001" },
-                { icon: <Phone className="w-5 h-5 text-white shrink-0" />, label: "Call Us", val: "+91 89368 41201" },
+                { icon: <MapPin className="w-5 h-5 text-white shrink-0 mt-0.5" />, label: "Studio Address", val: "Sumirayan Design Pvt. Ltd., Biscomaun Colony, Kumhrar, Near Oxygen Hospital, Patna, Bihar - 800007" },
+                { icon: <Phone className="w-5 h-5 text-white shrink-0" />, label: "Call Us", val: "+91 8936841201" },
                 { icon: <Mail className="w-5 h-5 text-white shrink-0" />, label: "Email", val: "sumirayandesign@gmail.com" },
                 { icon: <Clock className="w-5 h-5 text-white shrink-0" />, label: "Studio Hours", val: "Mon–Sat: 10 AM – 7 PM IST" },
               ].map((item, i) => (
@@ -1110,14 +1110,14 @@ function LocationSection() {
 
             <div className="flex gap-4">
               <a
-                href="https://maps.google.com/?q=Boring+Road+Patna+Bihar"
+               href="https://maps.app.goo.gl/2xZ2hQ7ZKj3CZuBB7"
                 target="_blank" rel="noopener noreferrer"
                 className="btn-premium inline-flex items-center gap-2 rounded-xl bg-white text-black px-6 py-3 text-sm font-black uppercase tracking-wider shadow-lg"
               >
                 <Navigation className="w-4 h-4" /> Get Directions
               </a>
               <a
-                href="https://wa.me/919123456789"
+                href="https://wa.me/918936841201?text=Hello%20Sumirayan%20Design,%20I%20want%20to%20discuss%20a%20project"
                 target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/40 text-white px-6 py-3 text-sm font-black uppercase tracking-wider hover:bg-white/10 transition-colors backdrop-blur-md"
               >
@@ -1150,7 +1150,7 @@ function LocationSection() {
                   </div>
                   <div className="mt-3 bg-black/80 border border-white/20 rounded-xl px-4 py-2 text-center whitespace-nowrap backdrop-blur-sm shadow-xl">
                     <p className="text-xs font-black text-white">Sumirayan Design</p>
-                    <p className="text-[10px] text-white/70">Boring Road, Patna</p>
+                    <p className="text-[10px] text-white/70">Biscomaun Colony, Kumhrar, Near Oxygen Hospital, Patna</p>
                   </div>
                 </div>
 
@@ -1159,9 +1159,9 @@ function LocationSection() {
                     <p className="text-xs font-black text-white">Patna, Bihar</p>
                     <p className="text-[10px] text-white/70">25.5941° N, 85.1376° E</p>
                   </div>
-                  <a
-                    href="https://maps.google.com/?q=Boring+Road+Patna+Bihar"
-                    target="_blank" rel="noopener noreferrer"
+                  <a 
+                   href="https://maps.app.goo.gl/2xZ2hQ7ZKj3CZuBB7"
+                   target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-[11px] font-black text-white uppercase tracking-wider hover:text-gray-300 transition-colors"
                   >
                     Open Maps <ExternalLink className="w-3 h-3" />
