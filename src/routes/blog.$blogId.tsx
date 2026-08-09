@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Calendar, User, Share2, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Calendar, User, Share2, Tag, Globe, Volume2, SquareSquare, ZoomIn, ZoomOut, PauseCircle } from "lucide-react";
 import { publicBlogPosts } from "@/lib/portal.functions";
 import { PageShell } from "@/components/site/PageShell"; 
 
@@ -10,7 +11,6 @@ export const Route = createFileRoute("/blog/$blogId")({
 });
 
 function BlogPostDetail() {
-  // URL से slug या id को पकड़ना
   const { blogId } = Route.useParams();
   const blogsFn = useServerFn(publicBlogPosts);
   
@@ -19,13 +19,76 @@ function BlogPostDetail() {
     queryFn: () => blogsFn() 
   });
 
-  // Safe Data Extraction
   const posts = Array.isArray(rawBlogs) ? rawBlogs : 
                Array.isArray((rawBlogs as any).posts) ? (rawBlogs as any).posts : 
                Array.isArray((rawBlogs as any).blog_posts) ? (rawBlogs as any).blog_posts : [];
 
-  // 🔥 THE FIX: अब यह कोड slug या id दोनों में से किसी से भी आर्टिकल ढूँढ लेगा!
   const post: any = posts.find((p: any) => p.slug === blogId || p.id === blogId);
+
+  // --- Advanced Reading Features State ---
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [fontSize, setFontSize] = useState(18); // Default font size
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // 1. Reading Progress Bar Logic
+  useEffect(() => {
+    const updateProgress = () => {
+      const currentScroll = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight) {
+        setReadingProgress(Number((currentScroll / scrollHeight).toFixed(2)) * 100);
+      }
+    };
+    window.addEventListener("scroll", updateProgress);
+    return () => window.removeEventListener("scroll", updateProgress);
+  }, []);
+
+  // 2. Google Translate Initialization
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).googleTranslateElementInit) {
+      const addScript = document.createElement("script");
+      addScript.setAttribute("src", "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit");
+      addScript.setAttribute("async", "true");
+      document.body.appendChild(addScript);
+      
+      (window as any).googleTranslateElementInit = () => {
+        new (window as any).google.translate.TranslateElement({
+          pageLanguage: 'en',
+          layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, 'google_translate_element');
+      };
+    }
+  }, []);
+
+  // 3. Text-to-Speech (Read Aloud) Logic
+  const toggleSpeech = () => {
+    if (!post?.content) return;
+    
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      // Strip HTML tags to get pure text for reading
+      const plainText = post.content.replace(/<[^>]+>/g, '') || post.excerpt;
+      const utterance = new SpeechSynthesisUtterance(plainText);
+      
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -41,7 +104,6 @@ function BlogPostDetail() {
     );
   }
 
-  // अगर आर्टिकल सच में नहीं है
   if (!post) {
     return (
       <PageShell title="Article not found" intro="The post you're looking for doesn't exist or has been removed." eyebrow="STUDIO JOURNAL">
@@ -56,12 +118,40 @@ function BlogPostDetail() {
 
   return (
     <PageShell title={<span className="hidden"></span>} intro="" eyebrow="">
+      
+      {/* --- Hide Ugly Google Translate Top Bar CSS --- */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .skiptranslate iframe { display: none !important; }
+        body { top: 0px !important; }
+        .goog-te-gadget-simple { background-color: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 6px 12px !important; border-radius: 50px !important; font-family: inherit !important; color: white !important; }
+        .goog-te-gadget-simple .goog-te-menu-value span { color: white !important; font-size: 12px !important; }
+        .goog-te-gadget-simple .goog-te-menu-value img { display: none !important; }
+        
+        /* Premium Text Selection Highlight */
+        ::selection { background: rgba(59, 130, 246, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+        ::-moz-selection { background: rgba(59, 130, 246, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+      `}} />
+
+      {/* --- Reading Progress Bar --- */}
+      <div 
+        className="fixed top-0 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-400 to-cyan-400 z-[100] transition-all duration-150 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
+        style={{ width: `${readingProgress}%` }}
+      />
+
       <article className="max-w-5xl mx-auto px-6 pb-32 pt-10 relative z-10">
         
-        {/* Back Button */}
-        <Link to="/blog" className="inline-flex items-center gap-2 text-white/50 hover:text-white mb-10 transition-colors text-sm font-medium">
-          <ArrowLeft className="w-4 h-4" /> Back to all articles
-        </Link>
+        {/* Top Controls: Back & Translate */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+            <Link to="/blog" className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium">
+            <ArrowLeft className="w-4 h-4" /> Back to all articles
+            </Link>
+            
+            {/* Translate Widget Wrapper */}
+            <div className="flex items-center gap-2 text-xs text-white/70">
+                <Globe className="w-4 h-4 text-blue-400" /> Translate:
+                <div id="google_translate_element"></div>
+            </div>
+        </div>
 
         {/* ─── Header Section ─── */}
         <header className="mb-12 text-center md:text-left">
@@ -94,17 +184,33 @@ function BlogPostDetail() {
           />
         </div>
 
+        {/* ─── Advanced Reading Toolbar (Sticky) ─── */}
+        <div className="sticky top-4 z-50 mb-10 mx-auto max-w-fit flex items-center gap-2 bg-[#050505]/80 backdrop-blur-xl border border-white/10 p-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            <button 
+                onClick={toggleSpeech}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${isSpeaking ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'}`}
+            >
+                {isSpeaking ? <PauseCircle className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {isSpeaking ? 'Pause Audio' : 'Listen'}
+            </button>
+            <div className="w-px h-6 bg-white/10 mx-1"></div>
+            <button onClick={() => setFontSize(f => Math.max(14, f - 2))} className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-full transition" title="Decrease Font Size"><ZoomOut className="w-4 h-4" /></button>
+            <span className="text-xs text-white/50 font-mono w-6 text-center">{fontSize}</span>
+            <button onClick={() => setFontSize(f => Math.min(26, f + 2))} className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-full transition" title="Increase Font Size"><ZoomIn className="w-4 h-4" /></button>
+        </div>
+
         {/* ─── Content & Sidebar Grid ─── */}
         <div className="grid lg:grid-cols-[1fr_300px] gap-12 items-start">
           
-          {/* Main Content (Supports line breaks naturally) */}
+          {/* Main Content (Dynamic Font Size) */}
           <div 
-            className="prose prose-invert prose-lg max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-blue-400 prose-img:rounded-2xl"
+            className="prose prose-invert max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-blue-400 prose-img:rounded-2xl prose-p:leading-[1.8] transition-all duration-300"
+            style={{ fontSize: `${fontSize}px` }}
             dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} 
           />
 
           {/* Sidebar Info Panel */}
-          <aside className="sticky top-24 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
+          <aside className="sticky top-28 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
             
             {/* Author */}
             <div>
