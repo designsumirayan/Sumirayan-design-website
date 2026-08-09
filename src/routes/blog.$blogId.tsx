@@ -1,105 +1,153 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PageShell } from "@/components/site/PageShell";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowLeft, Calendar, User, Share2, Tag } from "lucide-react";
 import { publicBlogPosts } from "@/lib/portal.functions";
+import { PageShell } from "@/components/site/PageShell"; 
 
 export const Route = createFileRoute("/blog/$blogId")({
   component: BlogPostDetail,
 });
 
 function BlogPostDetail() {
-  // Grab the specific ID from the URL that we passed from the main blog page
+  // URL से slug या id को पकड़ना
   const { blogId } = Route.useParams();
   const blogsFn = useServerFn(publicBlogPosts);
   
-  // Fetch the posts
-  const { data: posts = [], isLoading } = useQuery({ 
+  const { data: rawBlogs = [], isLoading } = useQuery({ 
     queryKey: ["public", "blogs"], 
     queryFn: () => blogsFn() 
   });
 
-  // Find the exact post that matches the URL ID
-  const post = posts.find((p) => p.id.toString() === blogId);
+  // Safe Data Extraction
+  const posts = Array.isArray(rawBlogs) ? rawBlogs : 
+               Array.isArray((rawBlogs as any).posts) ? (rawBlogs as any).posts : 
+               Array.isArray((rawBlogs as any).blog_posts) ? (rawBlogs as any).blog_posts : [];
+
+  // 🔥 THE FIX: अब यह कोड slug या id दोनों में से किसी से भी आर्टिकल ढूँढ लेगा!
+  const post: any = posts.find((p: any) => p.slug === blogId || p.id === blogId);
 
   if (isLoading) {
     return (
-      <PageShell eyebrow="Studio Journal" title="Loading…">
-        <div className="flex min-h-[50vh] items-center justify-center text-white/50">
-          Loading article...
+      <PageShell title="Loading..." intro="" eyebrow="">
+        <div className="max-w-4xl mx-auto px-6 py-32 text-center">
+          <div className="animate-pulse flex flex-col items-center gap-6">
+            <div className="w-full h-96 bg-white/5 rounded-3xl"></div>
+            <div className="w-3/4 h-12 bg-white/5 rounded-lg"></div>
+            <div className="w-1/2 h-6 bg-white/5 rounded-lg"></div>
+          </div>
         </div>
       </PageShell>
     );
   }
 
-  // Fallback if someone goes to an ID that doesn't exist
+  // अगर आर्टिकल सच में नहीं है
   if (!post) {
     return (
-      <PageShell eyebrow="Studio Journal" title="Article not found">
-        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
-          <p className="mt-4 text-white/60">The post you're looking for doesn't exist or has been removed.</p>
-          <Link to="/blog" className="mt-8 rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90">
-            Back to Journal
+      <PageShell title="Article not found" intro="The post you're looking for doesn't exist or has been removed." eyebrow="STUDIO JOURNAL">
+        <div className="max-w-xl mx-auto px-6 py-20 text-center">
+          <Link to="/blog" className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium hover:scale-105 transition-transform">
+            <ArrowLeft className="w-4 h-4" /> Back to Journal
           </Link>
         </div>
       </PageShell>
     );
   }
 
-
   return (
-    <PageShell eyebrow="Studio Journal" title={post.title}>
-      <div className="mx-auto max-w-4xl">
+    <PageShell title={<span className="hidden"></span>} intro="" eyebrow="">
+      <article className="max-w-5xl mx-auto px-6 pb-32 pt-10 relative z-10">
         
         {/* Back Button */}
-        <Link 
-          to="/blog" 
-          className="group mb-8 inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          Back to all articles
+        <Link to="/blog" className="inline-flex items-center gap-2 text-white/50 hover:text-white mb-10 transition-colors text-sm font-medium">
+          <ArrowLeft className="w-4 h-4" /> Back to all articles
         </Link>
 
-        {/* Full Article Card */}
-        <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] shadow-premium">
+        {/* ─── Header Section ─── */}
+        <header className="mb-12 text-center md:text-left">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
+            <span className="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-[10px] font-bold uppercase tracking-widest">
+              {post.category}
+            </span>
+            <span className="text-white/40 text-sm flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" /> 
+              {new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-semibold text-white leading-[1.15] mb-6">
+            {post.title}
+          </h1>
+          
+          <p className="text-lg md:text-xl text-white/60 leading-relaxed max-w-3xl">
+            {post.excerpt}
+          </p>
+        </header>
+
+        {/* ─── Cover Image ─── */}
+        <div className="w-full aspect-[16/9] md:aspect-[21/9] rounded-[2rem] overflow-hidden mb-16 bg-white/5 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
           <img 
             src={post.image_url} 
-            alt={post.title} 
-            className="max-h-[480px] w-full object-cover" 
+            alt={post.image_alt || post.title} 
+            onContextMenu={(e) => e.preventDefault()}
+            className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
           />
+        </div>
+
+        {/* ─── Content & Sidebar Grid ─── */}
+        <div className="grid lg:grid-cols-[1fr_300px] gap-12 items-start">
           
-          <div className="p-6 md:p-12 lg:px-16">
-            <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
-              <span className="font-medium text-[#7fb0ff]">{post.category}</span>
-              <span>•</span>
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4" /> 
-                {new Date(post.published_at).toLocaleDateString()}
-              </span>
-              <span>•</span>
-              <span>By <span className="text-white/90">{post.author_name}</span></span>
-            </div>
+          {/* Main Content (Supports line breaks naturally) */}
+          <div 
+            className="prose prose-invert prose-lg max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-blue-400 prose-img:rounded-2xl"
+            dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} 
+          />
 
-            <h1 className="mt-6 font-display text-4xl md:text-5xl font-semibold leading-tight text-white">
-              {post.title}
-            </h1>
+          {/* Sidebar Info Panel */}
+          <aside className="sticky top-24 flex flex-col gap-8 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
             
-            <p className="mt-6 text-xl leading-relaxed text-white/70 font-medium">
-              {post.excerpt}
-            </p>
-
-            <div className="mt-12 h-px w-full bg-white/10" />
-
-            {/* The Full Content */}
-            <div className="mt-12">
-              <div className="whitespace-pre-line text-base leading-relaxed text-white/80 md:text-lg md:leading-loose">
-                {post.content}
+            {/* Author */}
+            <div>
+              <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <User className="w-4 h-4" /> Written By
+              </h4>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-lg font-bold text-white shadow-inner">
+                    {post.author_name ? post.author_name.charAt(0).toUpperCase() : 'S'}
+                </div>
+                <span className="text-white font-medium text-lg">{post.author_name || "Sumit Singh"}</span>
               </div>
+              {post.author_bio && <p className="text-xs text-white/50 leading-relaxed">{post.author_bio}</p>}
             </div>
-          </div>
-        </article>
-      </div>
+
+            {/* Tags */}
+            {post.tags && (
+              <div className="pt-6 border-t border-white/10">
+                <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> Tags
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.split(',').map((tag: string, i: number) => (
+                    <span key={i} className="px-3 py-1 bg-white/5 text-white/60 hover:text-white rounded-lg text-[10px] uppercase tracking-wider border border-white/5 transition-colors cursor-default">
+                      {tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Share Button */}
+            <div className="pt-6 border-t border-white/10">
+              <button 
+                onClick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied to clipboard!'))} 
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 transition-colors text-sm font-medium border border-white/5 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" /> Share Article
+              </button>
+            </div>
+          </aside>
+        </div>
+      </article>
     </PageShell>
   );
 }
