@@ -18,7 +18,7 @@ function ITServicesPage() {
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
       {/* --- IT & Tech Theme Hero Banner --- */}
-      <div className="relative -mt-10 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
+      <div className="relative -mt-10 pt-15 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
         
         {/* Tech-inspired Glowing Orbs (Emerald & Cyan) */}
         <div className="absolute top-10 left-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
