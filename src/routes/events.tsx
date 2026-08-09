@@ -73,8 +73,8 @@ function EventsPage() {
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
       
       {/* --- Premium Hero Section --- */}
-      {/* pt-40 (Padding Top) ensures the text never hides behind the navbar again */}
-      <div className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center overflow-hidden">
+      {/* pt-15 (Padding Top) ensures the text never hides behind the navbar again */}
+      <div className="relative pt-15 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center overflow-hidden">
         
         {/* Soft 3D Glowing Elements in Background */}
         <div className="absolute top-10 left-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px] animate-pulse pointer-events-none z-0"></div>
