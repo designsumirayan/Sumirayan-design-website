@@ -19,7 +19,7 @@ import {
 } from "@/lib/content.functions";
 import {
   Trash2, Plus, CheckCircle2, Clock, Users, Mail, TrendingUp, ListTodo, ShieldCheck, Archive,
-  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap
+  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, Images, Briefcase, Calendar, GraduationCap
 } from "lucide-react";
 
 import logoUrl from "@/assets/sumirayan design.png";
@@ -66,25 +66,26 @@ function AdminPage() {
   const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: invalidate, onError: (e) => alert(e.message) });
   const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: invalidate });
 
+  // Safe Fallback Mapping for Database Keys
   const tasks = data?.tasks ?? [];
-  const members = data?.members ?? [];
-  const roles = data?.roles ?? [];
-  const contacts = data?.contacts ?? (data as any)?.messages ?? [];
-  const blogs = data?.blogs ?? (data as any)?.posts ?? [];
+  const members = data?.members ?? (data as any)?.profiles ?? [];
+  const roles = data?.roles ?? (data as any)?.user_roles ?? [];
+  const contacts = data?.contacts ?? (data as any)?.messages ?? (data as any)?.contact_messages ?? [];
+  const blogs = data?.blogs ?? (data as any)?.posts ?? (data as any)?.blog_posts ?? [];
 
-  const memberName = (id: string | null) => members.find((m) => m.id === id)?.full_name ?? "Unassigned";
-  const userRoles = (uid: string) => roles.filter((r) => r.user_id === uid).map((r) => r.role as string);
+  const memberName = (id: string | null) => members.find((m: any) => m.id === id)?.full_name ?? "Unassigned";
+  const userRoles = (uid: string) => roles.filter((r: any) => r.user_id === uid).map((r: any) => r.role as string);
 
   const isDone = (s: string) => s === "completed" || s === "done";
-  const openTasks = useMemo(() => tasks.filter((t) => !isDone(t.status)), [tasks]);
-  const oldTasks = useMemo(() => tasks.filter((t) => isDone(t.status)), [tasks]);
+  const openTasks = useMemo(() => tasks.filter((t: any) => !isDone(t.status)), [tasks]);
+  const oldTasks = useMemo(() => tasks.filter((t: any) => isDone(t.status)), [tasks]);
 
   const stats = [
     { k: "Team", v: members.length, icon: Users, tab: "team" as Tab },
     { k: "Open tasks", v: openTasks.length, icon: Clock, tab: "tasks" as Tab },
     { k: "Completed", v: oldTasks.length, icon: CheckCircle2, tab: "tasks" as Tab },
     { k: "Inbox", v: contacts.length, icon: Mail, tab: "contacts" as Tab },
-    { k: "Content", v: "Manage", icon: FolderOpen, tab: "content" as Tab },
+    { k: "Blogs", v: blogs.length, icon: FileText, tab: "blog" as Tab },
   ];
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
@@ -92,13 +93,13 @@ function AdminPage() {
     { id: "tasks", label: "Tasks", icon: ListTodo },
     { id: "team", label: "Team & Roles", icon: ShieldCheck },
     { id: "contacts", label: "Messages", icon: Mail },
-    { id: "content", label: "Site Content", icon: FolderOpen },
+    { id: "content", label: "Site Content", icon: LayoutGrid },
     { id: "blog", label: "Blog", icon: FileText },
     { id: "performance", label: "Performance", icon: TrendingUp },
   ];
 
   return (
-    <DashboardShell role="Admin" title="Command Center" subtitle="Tasks, team roles, client messages and portfolio management.">
+    <DashboardShell role="Admin" title="Command Center" subtitle="Tasks, team roles, client messages and monthly performance.">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
         <div className="grid place-items-center h-12 w-12 shrink-0 rounded-xl bg-white">
           <img src={logoUrl} alt="Sumirayan Design" className="h-6 w-auto object-contain" onContextMenu={(e) => e.preventDefault()} />
@@ -114,7 +115,7 @@ function AdminPage() {
           <button key={s.k} onClick={() => setTab(s.tab)} className="text-left glass-strong rounded-2xl p-4 md:p-6 hover:bg-white/[0.06] transition">
             <s.icon className="w-5 h-5 text-[#1f5fb7]" />
             <p className="mt-2 text-[10px] md:text-xs uppercase tracking-[0.16em] text-white/50">{s.k}</p>
-            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading && s.v !== "Manage" ? "…" : s.v}</p>
+            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading ? "…" : s.v}</p>
           </button>
         ))}
       </div>
@@ -132,7 +133,7 @@ function AdminPage() {
         {tab === "tasks" && ( <TasksTab openTasks={openTasks} oldTasks={oldTasks} members={members} memberName={memberName} onCreate={(v: any) => createMut.mutate(v)} onDelete={(id: string) => deleteMut.mutate(id)} onUpdate={(id: string, patch: any) => statusMut.mutate({ id, ...patch })} creating={createMut.isPending} /> )}
         {tab === "team" && ( <TeamTab members={members} userRoles={userRoles} onAssign={(user_id: string, role: Role) => assignMut.mutate({ user_id, role })} onRemove={(user_id: string, role: Role) => removeRoleMut.mutate({ user_id, role })} /> )}
         {tab === "contacts" && ( <ContactsTab contacts={contacts} onDelete={(id: string) => delContactMut.mutate(id)} /> )}
-        {tab === "blog" && ( <BlogTab posts={blogs} creating={createBlogMut.isPending} onCreate={(input) => createBlogMut.mutate(input)} onDelete={(id) => deleteBlogMut.mutate(id)} /> )}
+        {tab === "blog" && ( <BlogTab posts={blogs} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
         {tab === "content" && <ContentTab />}
         {tab === "performance" && <PerformanceTab perf={perf} />}
       </div>
@@ -589,7 +590,6 @@ type FieldDef = {
 };
 
 const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; description: string; fields: FieldDef[]; imageField: string; titleField: string; metaFields?: string[]; }[] = [
-  // 1. DESIGN (Portfolio Format)
   {
     id: "design", label: "Design Portfolio", icon: Pencil, imageField: "cover_image", titleField: "title",
     description: "Brand identity, packaging, and graphic design projects.",
@@ -608,7 +608,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
-  // 2. PHOTOGRAPHY (Portfolio Format)
   {
     id: "photography", label: "Photography & Video", icon: Images, imageField: "cover_image", titleField: "title",
     description: "Commercial shoots, events, and cinematic films.",
@@ -627,7 +626,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
-  // 3. ART (Portfolio Format)
   {
     id: "art", label: "Art & Canvas", icon: LayoutGrid, imageField: "cover_image", titleField: "title",
     description: "Physical artworks, murals, and installations.",
@@ -647,7 +645,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0", halfWidth: true },
     ],
   },
-  // 4. IT SERVICES (Portfolio Format)
   {
     id: "it", label: "IT / Software", icon: Globe, imageField: "cover_image", titleField: "title",
     description: "Software development, CRM, and SEO case studies.",
@@ -665,7 +662,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
-  // 5. LEARN (Standard Format Restored)
   {
     id: "learn", label: "Courses", icon: GraduationCap, imageField: "cover_image", titleField: "title", 
     description: "Manage learning modules and courses.",
@@ -676,7 +672,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "duration", label: "Duration", placeholder: "6 weeks" }, { name: "enroll_url", label: "Enroll URL", type: "url" }, { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
     ],
   },
-  // 6. EVENTS (Standard Format Restored)
   {
     id: "events", label: "Events", icon: Calendar, imageField: "cover_image", titleField: "title", 
     description: "Manage agency events and exhibitions.",
@@ -688,7 +683,6 @@ const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; descriptio
       { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
     ],
   },
-  // 7. CAREERS (Standard Format Restored)
   {
     id: "careers", label: "Careers", icon: Briefcase, imageField: "", titleField: "title", 
     description: "Manage job openings.",
@@ -746,7 +740,7 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
   const createFn = useServerFn(fns.create);
   const deleteFn = useServerFn(fns.del);
   const qc = useQueryClient();
-  const queryKey = ["admin", "folders", def.id];
+  const queryKey = ["admin", "content", def.id];
 
   const { data = [], isLoading } = useQuery({ queryKey, queryFn: () => listFn() });
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -838,7 +832,7 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
                 return (
                 <label key={f.name} className={`block ${wrapperCls}`}>
                     <span className="text-xs font-medium text-white/70 mb-1 block">{f.label}</span>
-                    <textarea name={f.name} required={f.required} placeholder={f.placeholder} defaultValue={getDefault(f)} rows={f.name==='gallery_images' ? 4 : 3} className={`${cls} resize-none font-mono text-xs`} />
+                    <textarea name={f.name} required={f.required} placeholder={f.placeholder} defaultValue={getDefault(f)} rows={f.name==='gallery_images' ? 4 : 3} className={`${cls} resize-none ${f.name==='gallery_images' || f.name==='features' ? 'font-mono text-xs' : ''}`} />
                     {f.helpText && <span className="text-[10px] text-white/40 mt-1 block">{f.helpText}</span>}
                 </label>
                 );
