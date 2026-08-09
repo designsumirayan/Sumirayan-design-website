@@ -19,7 +19,7 @@ import {
 } from "@/lib/content.functions";
 import {
   Trash2, Plus, CheckCircle2, Clock, Users, Mail, TrendingUp, ListTodo, ShieldCheck, Archive,
-  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, Images, Briefcase, Calendar, GraduationCap
+  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap
 } from "lucide-react";
 
 import logoUrl from "@/assets/sumirayan design.png";
@@ -66,7 +66,6 @@ function AdminPage() {
   const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: invalidate, onError: (e) => alert(e.message) });
   const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: invalidate });
 
-  // Safe Fallback Mapping for Database Keys
   const tasks = data?.tasks ?? [];
   const members = data?.members ?? (data as any)?.profiles ?? [];
   const roles = data?.roles ?? (data as any)?.user_roles ?? [];
@@ -85,7 +84,7 @@ function AdminPage() {
     { k: "Open tasks", v: openTasks.length, icon: Clock, tab: "tasks" as Tab },
     { k: "Completed", v: oldTasks.length, icon: CheckCircle2, tab: "tasks" as Tab },
     { k: "Inbox", v: contacts.length, icon: Mail, tab: "contacts" as Tab },
-    { k: "Blogs", v: blogs.length, icon: FileText, tab: "blog" as Tab },
+    { k: "Content", v: "Manage", icon: FolderOpen, tab: "content" as Tab },
   ];
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
@@ -93,7 +92,7 @@ function AdminPage() {
     { id: "tasks", label: "Tasks", icon: ListTodo },
     { id: "team", label: "Team & Roles", icon: ShieldCheck },
     { id: "contacts", label: "Messages", icon: Mail },
-    { id: "content", label: "Site Content", icon: LayoutGrid },
+    { id: "content", label: "Site Content", icon: FolderOpen },
     { id: "blog", label: "Blog", icon: FileText },
     { id: "performance", label: "Performance", icon: TrendingUp },
   ];
@@ -115,7 +114,7 @@ function AdminPage() {
           <button key={s.k} onClick={() => setTab(s.tab)} className="text-left glass-strong rounded-2xl p-4 md:p-6 hover:bg-white/[0.06] transition">
             <s.icon className="w-5 h-5 text-[#1f5fb7]" />
             <p className="mt-2 text-[10px] md:text-xs uppercase tracking-[0.16em] text-white/50">{s.k}</p>
-            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading ? "…" : s.v}</p>
+            <p className="mt-1 font-display text-3xl md:text-4xl font-semibold text-gradient-brand">{isLoading && s.v !== "Manage" ? "…" : s.v}</p>
           </button>
         ))}
       </div>
@@ -470,7 +469,7 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
               excerpt: String(fd.get("excerpt") || ""), content: String(fd.get("content") || ""),
               seo_title: String(fd.get("seo_title") || ""), seo_description: String(fd.get("seo_description") || ""),
               focus_keywords: String(fd.get("focus_keywords") || ""), og_image: String(fd.get("og_image") || ""),
-              author_name: String(fd.get("author_name") || "Sumirayan Design"), author_bio: String(fd.get("author_bio") || ""),
+              author_name: String(fd.get("author_name") || "Sumit Singh"), author_bio: String(fd.get("author_bio") || ""),
               status: (fd.get("status") as "draft" | "published") || "published",
               published_at: fd.get("published_at") ? new Date(String(fd.get("published_at"))).toISOString() : new Date().toISOString(),
             };
@@ -580,7 +579,7 @@ function BlogTab({ posts, creating, onCreate, onDelete }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 7. CONTENT TAB (ALL 7 SECTIONS REUNITED: Portfolio + Misc Content)
+// 7. CONTENT TAB (ALL 7 SECTIONS REUNITED)
 // ─────────────────────────────────────────────────────────────
 type ContentCategory = "design" | "photography" | "art" | "it" | "learn" | "events" | "careers";
 
@@ -591,102 +590,54 @@ type FieldDef = {
 
 const CONTENT_KINDS: { id: ContentCategory; label: string; icon: any; description: string; fields: FieldDef[]; imageField: string; titleField: string; metaFields?: string[]; }[] = [
   {
-    id: "design", label: "Design Portfolio", icon: Pencil, imageField: "cover_image", titleField: "title",
-    description: "Brand identity, packaging, and graphic design projects.",
-    metaFields: ["category", "client", "year"],
+    id: "design", label: "Design Portfolio", icon: Pencil, imageField: "cover_image", titleField: "title", description: "Brand identity, packaging, and graphic design projects.", metaFields: ["category", "client", "year"],
     fields: [
-      { name: "title", label: "Project Title *", required: true },
-      { name: "client", label: "Client Name", halfWidth: true },
-      { name: "category", label: "Category", type: "select", options: ["Branding", "Graphic Design", "Website Design", "Social Media Design", "Event Branding", "Packaging", "Other"], defaultValue: "Branding", halfWidth: true },
-      { name: "cover_image", label: "Cover Thumbnail URL *", type: "url", required: true, helpText: "Main thumbnail for the website grid." },
-      { name: "description", label: "Project Description / Case Study", type: "textarea", placeholder: "Detailed story about the project..." },
+      { name: "title", label: "Project Title *", required: true }, { name: "client", label: "Client Name", halfWidth: true }, { name: "category", label: "Category", type: "select", options: ["Branding", "Graphic Design", "Website Design", "Social Media Design", "Event Branding", "Packaging", "Other"], defaultValue: "Branding", halfWidth: true },
+      { name: "cover_image", label: "Cover Thumbnail URL *", type: "url", required: true, helpText: "Main thumbnail for the website grid." }, { name: "description", label: "Project Description / Case Study", type: "textarea", placeholder: "Detailed story about the project..." },
       { name: "gallery_images", label: "Project Gallery (Multiple URLs)", type: "textarea", placeholder: "url1.jpg \nurl2.jpg \nurl3.mp4", helpText: "Add multiple image/video URLs separated by line breaks." },
-      { name: "year", label: "Year", type: "number", halfWidth: true },
-      { name: "project_url", label: "Live Project URL", type: "url", halfWidth: true },
-      { name: "seo_title", label: "SEO Title", halfWidth: true },
-      { name: "slug", label: "URL Slug", placeholder: "e.g. foundation-academy-branding", halfWidth: true },
-      { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
+      { name: "year", label: "Year", type: "number", halfWidth: true }, { name: "project_url", label: "Live Project URL", type: "url", halfWidth: true }, { name: "seo_title", label: "SEO Title", halfWidth: true }, { name: "slug", label: "URL Slug", placeholder: "e.g. foundation-academy-branding", halfWidth: true }, { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
   {
-    id: "photography", label: "Photography & Video", icon: Images, imageField: "cover_image", titleField: "title",
-    description: "Commercial shoots, events, and cinematic films.",
-    metaFields: ["category", "client", "location"],
+    id: "photography", label: "Photography & Video", icon: Images, imageField: "cover_image", titleField: "title", description: "Commercial shoots, events, and cinematic films.", metaFields: ["category", "client", "location"],
     fields: [
-      { name: "title", label: "Shoot / Event Title *", required: true },
-      { name: "client", label: "Client / Couple Name", halfWidth: true },
-      { name: "category", label: "Category", type: "select", options: ["Wedding Photography", "Corporate Event Coverage", "Product Photography", "Drone Shoot", "Video Production", "Other"], defaultValue: "Wedding Photography", halfWidth: true },
-      { name: "cover_image", label: "Cover Thumbnail URL *", type: "url", required: true },
-      { name: "description", label: "Caption / Story", type: "textarea" },
-      { name: "gallery_images", label: "Photo & Video Gallery (URLs)", type: "textarea", placeholder: "photo1.jpg \nphoto2.jpg \nvideo.mp4", helpText: "Supports both Images and .mp4 videos." },
-      { name: "location", label: "Location", halfWidth: true },
-      { name: "captured_at", label: "Date Captured", type: "datetime-local", halfWidth: true },
-      { name: "seo_title", label: "SEO Title", halfWidth: true },
-      { name: "slug", label: "URL Slug", halfWidth: true },
-      { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
+      { name: "title", label: "Shoot / Event Title *", required: true }, { name: "client", label: "Client / Couple Name", halfWidth: true }, { name: "category", label: "Category", type: "select", options: ["Wedding Photography", "Corporate Event Coverage", "Product Photography", "Drone Shoot", "Video Production", "Other"], defaultValue: "Wedding Photography", halfWidth: true },
+      { name: "cover_image", label: "Cover Thumbnail URL *", type: "url", required: true }, { name: "description", label: "Caption / Story", type: "textarea" }, { name: "gallery_images", label: "Photo & Video Gallery (URLs)", type: "textarea", placeholder: "photo1.jpg \nphoto2.jpg \nvideo.mp4", helpText: "Supports both Images and .mp4 videos." },
+      { name: "location", label: "Location", halfWidth: true }, { name: "captured_at", label: "Date Captured", type: "datetime-local", halfWidth: true }, { name: "seo_title", label: "SEO Title", halfWidth: true }, { name: "slug", label: "URL Slug", halfWidth: true }, { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
   {
-    id: "art", label: "Art & Canvas", icon: LayoutGrid, imageField: "cover_image", titleField: "title",
-    description: "Physical artworks, murals, and installations.",
-    metaFields: ["medium", "year", "for_sale"],
+    id: "art", label: "Art & Canvas", icon: LayoutGrid, imageField: "cover_image", titleField: "title", description: "Physical artworks, murals, and installations.", metaFields: ["medium", "year", "for_sale"],
     fields: [
-      { name: "title", label: "Artwork Collection Name *", required: true },
-      { name: "client", label: "Artist Name", defaultValue: "Sumit Singh", halfWidth: true },
-      { name: "category", label: "Category", type: "select", options: ["Oil Painting Collection", "Canvas Artwork", "Wall Painting", "Portrait Art", "Other"], defaultValue: "Canvas Artwork", halfWidth: true },
-      { name: "cover_image", label: "Cover Image URL *", type: "url", required: true },
-      { name: "description", label: "Artwork Story / Description", type: "textarea" },
-      { name: "gallery_images", label: "Multiple Artwork Images (URLs)", type: "textarea", placeholder: "art1.jpg \nart2.jpg" },
-      { name: "medium", label: "Medium", placeholder: "e.g. Oil on Canvas", halfWidth: true },
-      { name: "dimensions", label: "Dimensions", placeholder: "e.g. 60 × 90 cm", halfWidth: true },
-      { name: "year", label: "Year Created", type: "number", halfWidth: true },
-      { name: "price", label: "Price (₹)", type: "number", halfWidth: true },
-      { name: "for_sale", label: "Available for sale", type: "checkbox", halfWidth: true },
-      { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0", halfWidth: true },
+      { name: "title", label: "Artwork Collection Name *", required: true }, { name: "client", label: "Artist Name", defaultValue: "Sumit Singh", halfWidth: true }, { name: "category", label: "Category", type: "select", options: ["Oil Painting Collection", "Canvas Artwork", "Wall Painting", "Portrait Art", "Other"], defaultValue: "Canvas Artwork", halfWidth: true },
+      { name: "cover_image", label: "Cover Image URL *", type: "url", required: true }, { name: "description", label: "Artwork Story / Description", type: "textarea" }, { name: "gallery_images", label: "Multiple Artwork Images (URLs)", type: "textarea", placeholder: "art1.jpg \nart2.jpg" },
+      { name: "medium", label: "Medium", placeholder: "e.g. Oil on Canvas", halfWidth: true }, { name: "dimensions", label: "Dimensions", placeholder: "e.g. 60 × 90 cm", halfWidth: true }, { name: "year", label: "Year Created", type: "number", halfWidth: true }, { name: "price", label: "Price (₹)", type: "number", halfWidth: true }, { name: "for_sale", label: "Available for sale", type: "checkbox", halfWidth: true }, { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0", halfWidth: true },
     ],
   },
   {
-    id: "it", label: "IT / Software", icon: Globe, imageField: "cover_image", titleField: "title",
-    description: "Software development, CRM, and SEO case studies.",
-    metaFields: ["category", "client"],
+    id: "it", label: "IT / Software", icon: Globe, imageField: "cover_image", titleField: "title", description: "Software development, CRM, and SEO case studies.", metaFields: ["category", "client"],
     fields: [
-      { name: "title", label: "Project Title *", required: true },
-      { name: "client", label: "Client Name", halfWidth: true },
-      { name: "category", label: "Category", type: "select", options: ["Website Development", "CRM Development", "SEO Strategy", "App Development"], defaultValue: "Website Development", halfWidth: true },
-      { name: "cover_image", label: "Cover Image URL *", type: "url", required: true },
-      { name: "description", label: "Full Case Study", type: "textarea" },
-      { name: "gallery_images", label: "Screenshots / Gallery (URLs)", type: "textarea" },
-      { name: "features", label: "Key Features / Tech Stack (One per line)", type: "textarea" },
-      { name: "project_url", label: "Live Project URL", type: "url", halfWidth: true },
-      { name: "slug", label: "URL Slug", halfWidth: true },
-      { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
+      { name: "title", label: "Project Title *", required: true }, { name: "client", label: "Client Name", halfWidth: true }, { name: "category", label: "Category", type: "select", options: ["Website Development", "CRM Development", "SEO Strategy", "App Development"], defaultValue: "Website Development", halfWidth: true },
+      { name: "cover_image", label: "Cover Image URL *", type: "url", required: true }, { name: "description", label: "Full Case Study", type: "textarea" }, { name: "gallery_images", label: "Screenshots / Gallery (URLs)", type: "textarea" }, { name: "features", label: "Key Features / Tech Stack (One per line)", type: "textarea" },
+      { name: "project_url", label: "Live Project URL", type: "url", halfWidth: true }, { name: "slug", label: "URL Slug", halfWidth: true }, { name: "sort_order", label: "Sort Order", type: "number", defaultValue: "0" },
     ],
   },
   {
-    id: "learn", label: "Courses", icon: GraduationCap, imageField: "cover_image", titleField: "title", 
-    description: "Manage learning modules and courses.",
-    metaFields: ["level", "duration"],
+    id: "learn", label: "Courses", icon: GraduationCap, imageField: "cover_image", titleField: "title", description: "Manage learning modules and courses.", metaFields: ["level", "duration"],
     fields: [
-      { name: "title", label: "Course title", required: true }, { name: "cover_image", label: "Cover image URL", type: "url", required: true },
-      { name: "summary", label: "Summary", type: "textarea", required: true }, { name: "level", label: "Level", type: "select", options: ["beginner", "intermediate", "advanced"], defaultValue: "beginner" },
-      { name: "duration", label: "Duration", placeholder: "6 weeks" }, { name: "enroll_url", label: "Enroll URL", type: "url" }, { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
+      { name: "title", label: "Course title", required: true }, { name: "cover_image", label: "Cover image URL", type: "url", required: true }, { name: "summary", label: "Summary", type: "textarea", required: true },
+      { name: "level", label: "Level", type: "select", options: ["beginner", "intermediate", "advanced"], defaultValue: "beginner" }, { name: "duration", label: "Duration", placeholder: "6 weeks" }, { name: "enroll_url", label: "Enroll URL", type: "url" }, { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
     ],
   },
   {
-    id: "events", label: "Events", icon: Calendar, imageField: "cover_image", titleField: "title", 
-    description: "Manage agency events and exhibitions.",
-    metaFields: ["starts_at", "venue", "status"],
+    id: "events", label: "Events", icon: Calendar, imageField: "cover_image", titleField: "title", description: "Manage agency events and exhibitions.", metaFields: ["starts_at", "venue", "status"],
     fields: [
-      { name: "title", label: "Event title", required: true }, { name: "cover_image", label: "Cover image URL", type: "url", required: true },
-      { name: "description", label: "Description", type: "textarea" }, { name: "starts_at", label: "Starts at", type: "datetime-local", halfWidth: true },
-      { name: "ends_at", label: "Ends at", type: "datetime-local", halfWidth: true }, { name: "venue", label: "Venue", halfWidth: true }, { name: "status", label: "Status", type: "select", options: ["upcoming", "past"], defaultValue: "upcoming", halfWidth: true }, 
-      { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
+      { name: "title", label: "Event title", required: true }, { name: "cover_image", label: "Cover image URL", type: "url", required: true }, { name: "description", label: "Description", type: "textarea" },
+      { name: "starts_at", label: "Starts at", type: "datetime-local", halfWidth: true }, { name: "ends_at", label: "Ends at", type: "datetime-local", halfWidth: true }, { name: "venue", label: "Venue", halfWidth: true }, { name: "status", label: "Status", type: "select", options: ["upcoming", "past"], defaultValue: "upcoming", halfWidth: true }, { name: "sort_order", label: "Sort order", type: "number", defaultValue: "0" },
     ],
   },
   {
-    id: "careers", label: "Careers", icon: Briefcase, imageField: "", titleField: "title", 
-    description: "Manage job openings.",
-    metaFields: ["department", "location", "is_open"],
+    id: "careers", label: "Careers", icon: Briefcase, imageField: "", titleField: "title", description: "Manage job openings.", metaFields: ["department", "location", "is_open"],
     fields: [
       { name: "title", label: "Role title", required: true }, { name: "department", label: "Department", halfWidth: true }, { name: "location", label: "Location", placeholder: "Remote / Mumbai", halfWidth: true },
       { name: "employment_type", label: "Employment type", defaultValue: "Full-time", halfWidth: true }, { name: "is_open", label: "Currently open", type: "checkbox", defaultValue: "true", halfWidth: true },
@@ -703,22 +654,15 @@ function ContentTab() {
     <div className="space-y-6">
       <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar scroll-smooth">
         {CONTENT_KINDS.map((k) => (
-          <button
-            key={k.id}
-            onClick={() => setKind(k.id)}
-            className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm transition font-medium ${kind === k.id ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5"}`}
-          >
-            <k.icon className={`w-4 h-4 ${kind === k.id ? "text-black" : "text-white/40"}`} />
-            {k.label}
+          <button key={k.id} onClick={() => setKind(k.id)} className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm transition font-medium ${kind === k.id ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5"}`}>
+            <k.icon className={`w-4 h-4 ${kind === k.id ? "text-black" : "text-white/40"}`} /> {k.label}
           </button>
         ))}
       </div>
-      
       <div className="mb-4 pl-2 border-l-2 border-blue-500">
           <h3 className="text-white font-medium text-lg">{def.label} Manager</h3>
           <p className="text-white/50 text-sm">{def.description}</p>
       </div>
-
       <FolderManagerPanel key={kind} def={def} />
     </div>
   );
@@ -745,15 +689,8 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
   const { data = [], isLoading } = useQuery({ queryKey, queryFn: () => listFn() });
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  const createMut = useMutation({
-    mutationFn: (input: Record<string, unknown>) => createFn({ data: input }),
-    onSuccess: () => qc.invalidateQueries({ queryKey }),
-    onError: (e) => alert(e instanceof Error ? e.message : "Failed to save item."),
-  });
-  const deleteMut = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey }),
-  });
+  const createMut = useMutation({ mutationFn: (input: Record<string, unknown>) => createFn({ data: input }), onSuccess: () => qc.invalidateQueries({ queryKey }), onError: (e) => alert(e instanceof Error ? e.message : "Failed to save item.") });
+  const deleteMut = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey }) });
 
   const getDefault = (f: FieldDef) => {
     if (!editingItem) return f.defaultValue;
@@ -797,30 +734,16 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
             }
           }
 
-          if (editingItem) {
-            deleteMut.mutate(editingItem.id, {
-              onSuccess: () => {
-                createMut.mutate(payload, {
-                  onSuccess: () => { setEditingItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-                });
-              }
-            });
-          } else {
-            createMut.mutate(payload, { onSuccess: () => (e.target as HTMLFormElement).reset() });
-          }
+          if (editingItem) { deleteMut.mutate(editingItem.id, { onSuccess: () => { createMut.mutate(payload, { onSuccess: () => { setEditingItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); } }); } }); } 
+          else { createMut.mutate(payload, { onSuccess: () => (e.target as HTMLFormElement).reset() }); }
         }}
         className="glass-strong rounded-2xl p-4 md:p-6 space-y-6 relative"
       >
         <div id="folder-form-top" className="absolute -top-20" />
         
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <h2 className="font-display text-xl flex items-center gap-2">
-            {editingItem ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : <FolderOpen className="w-5 h-5 text-[#1f5fb7]" />} 
-            {editingItem ? `Edit Item` : `Create New Item`}
-            </h2>
-            {editingItem && (
-                <button type="button" onClick={() => setEditingItem(null)} className="text-xs text-white/50 hover:text-white bg-white/5 px-3 py-1 rounded-full">Cancel Edit</button>
-            )}
+            <h2 className="font-display text-xl flex items-center gap-2">{editingItem ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : <FolderOpen className="w-5 h-5 text-[#1f5fb7]" />} {editingItem ? `Edit Item` : `Create New Item`}</h2>
+            {editingItem && (<button type="button" onClick={() => setEditingItem(null)} className="text-xs text-white/50 hover:text-white bg-white/5 px-3 py-1 rounded-full">Cancel Edit</button>)}
         </div>
         
         <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
@@ -850,8 +773,7 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
             if (f.type === "checkbox") {
                 return (
                 <label key={f.name} className={`flex items-center gap-3 text-sm font-medium text-white/80 p-3 rounded-lg border border-white/5 bg-white/[0.02] ${wrapperCls}`}>
-                    <input type="checkbox" name={f.name} defaultChecked={editingItem ? !!editingItem[f.name] : f.defaultValue === "true"} className="w-4 h-4 accent-blue-500" />
-                    {f.label}
+                    <input type="checkbox" name={f.name} defaultChecked={editingItem ? !!editingItem[f.name] : f.defaultValue === "true"} className="w-4 h-4 accent-blue-500" /> {f.label}
                 </label>
                 );
             }
@@ -864,7 +786,6 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
             );
             })}
         </div>
-
         <div className="pt-6 border-t border-white/10 flex justify-end">
           <button disabled={createMut.isPending || deleteMut.isPending} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full text-sm font-medium text-white shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60" style={{ background: "var(--gradient-brand)" }}>
             {createMut.isPending || deleteMut.isPending ? "Saving…" : (editingItem ? "Update Item" : `Create Item`)}
@@ -873,56 +794,30 @@ function FolderManagerPanel({ def }: { def: typeof CONTENT_KINDS[number] }) {
       </form>
 
       <div className="glass-strong rounded-2xl p-4 md:p-6 flex flex-col h-[800px]">
-        <h2 className="font-display text-xl mb-4 flex items-center gap-2 shrink-0">
-            Items List
-            <span className="bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">{data.length}</span>
-        </h2>
-        
+        <h2 className="font-display text-xl mb-4 flex items-center gap-2 shrink-0">Items List <span className="bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">{data.length}</span></h2>
         <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
           {isLoading && <p className="text-white/50 text-sm text-center py-10">Loading...</p>}
-          {!isLoading && data.length === 0 && (
-             <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
-                 <p className="text-white/50 text-sm">No items created yet.</p>
-             </div>
-          )}
+          {!isLoading && data.length === 0 && (<div className="text-center py-10 border border-dashed border-white/10 rounded-xl"><p className="text-white/50 text-sm">No items created yet.</p></div>)}
           
           {data.map((row: any) => {
             const galleryCount = Array.isArray(row.gallery_images) ? row.gallery_images.length : 0;
             return (
             <article key={row.id} className={`group rounded-xl border ${editingItem?.id === row.id ? "border-blue-500/50 bg-blue-500/5" : "border-white/10 bg-white/[0.03]"} p-3 hover:bg-white/[0.06] transition flex flex-col gap-3`}>
-              
               {def.imageField && row[def.imageField] && (
                 <div className="aspect-video w-full rounded-lg overflow-hidden shrink-0 relative bg-black/50">
-                    {isVideoUrl(row[def.imageField]) ? (
-                        <video src={row[def.imageField]} autoPlay loop muted playsInline controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} className="w-full h-full object-cover" />
-                    ) : (
-                        <img src={row[def.imageField]} alt={row[def.titleField]} loading="lazy" onContextMenu={(e) => e.preventDefault()} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    )}
-                    {galleryCount > 0 && (
-                        <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1">
-                            <Images className="w-3 h-3" /> {galleryCount} Media
-                        </div>
-                    )}
+                    {isVideoUrl(row[def.imageField]) ? (<video src={row[def.imageField]} autoPlay loop muted playsInline controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} className="w-full h-full object-cover" />) : (<img src={row[def.imageField]} alt={row[def.titleField]} loading="lazy" onContextMenu={(e) => e.preventDefault()} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />)}
+                    {galleryCount > 0 && (<div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1"><Images className="w-3 h-3" /> {galleryCount} Media</div>)}
                 </div>
               )}
-
               <div className="flex-1 min-w-0 flex flex-col">
-                <div className="text-[10px] uppercase tracking-widest text-[#7fb0ff] mb-1 truncate">
-                    {row.category || def.label} {row.client ? `· ${row.client}` : ""}
-                </div>
+                <div className="text-[10px] uppercase tracking-widest text-[#7fb0ff] mb-1 truncate">{row.category || def.label} {row.client ? `· ${row.client}` : ""}</div>
                 <h3 className="font-display text-base font-semibold leading-snug line-clamp-2">{row[def.titleField]}</h3>
-                
                 {row.description && <p className="mt-2 line-clamp-2 text-xs text-white/50">{row.description}</p>}
-                
                 <div className="mt-auto pt-3 mt-3 border-t border-white/5 flex items-center justify-between gap-2">
                     <span className="text-[10px] text-white/30 bg-white/5 px-2 py-0.5 rounded">Order: {row.sort_order ?? 0}</span>
                   <div className="flex items-center gap-1 shrink-0">
-                    <button type="button" onClick={() => { setEditingItem(row); document.getElementById("folder-form-top")?.scrollIntoView({ behavior: "smooth" }); }} className="rounded-md p-1.5 text-white/50 hover:bg-blue-500/20 hover:text-blue-300 transition" title="Edit Item">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button type="button" onClick={() => { if (confirm("Delete this entire item?")) deleteMut.mutate(row.id); }} className="rounded-md p-1.5 text-white/50 hover:bg-red-500/20 hover:text-red-300 transition" title="Delete Item">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <button type="button" onClick={() => { setEditingItem(row); document.getElementById("folder-form-top")?.scrollIntoView({ behavior: "smooth" }); }} className="rounded-md p-1.5 text-white/50 hover:bg-blue-500/20 hover:text-blue-300 transition" title="Edit Item"><Pencil className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => { if (confirm("Delete this entire item?")) deleteMut.mutate(row.id); }} className="rounded-md p-1.5 text-white/50 hover:bg-red-500/20 hover:text-red-300 transition" title="Delete Item"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               </div>
