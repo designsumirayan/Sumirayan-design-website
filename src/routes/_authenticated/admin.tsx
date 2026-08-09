@@ -67,24 +67,23 @@ function AdminPage() {
   const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: forceSync, onError: (e) => alert("Error: " + e.message) });
   const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: forceSync });
 
-  // 🚀 AGGRESSIVE DATA EXTRACTOR (Zero Error Mapping)
+  // 🚀 FIXED DATA MAPPING: Now exactly matches your Supabase Table names
   const tasks = Array.isArray(data?.tasks) ? data.tasks : [];
   const members = Array.isArray(data?.members) ? data.members : Array.isArray((data as any)?.profiles) ? (data as any).profiles : [];
   const roles = Array.isArray(data?.roles) ? data.roles : Array.isArray((data as any)?.user_roles) ? (data as any).user_roles : [];
-  const contacts = Array.isArray(data?.contacts) ? data.contacts : Array.isArray((data as any)?.messages) ? (data as any).messages : [];
+  const contacts = Array.isArray(data?.contacts) ? data.contacts : Array.isArray((data as any)?.contact_messages) ? (data as any).contact_messages : [];
   
-  // 🔥 HUNTER CODE FOR BLOGS: It will search the entire database response for your blogs
+  // 🔥 FINAL BLOG FIX: Directly targeting the 'blog_posts' table you showed in the screenshot
   const blogs = useMemo(() => {
     if (!data) return [];
+    if (Array.isArray((data as any).blog_posts)) return (data as any).blog_posts; // Matches your DB screenshot
     if (Array.isArray((data as any).blogs)) return (data as any).blogs;
     if (Array.isArray((data as any).posts)) return (data as any).posts;
-    if (Array.isArray((data as any).blog_posts)) return (data as any).blog_posts;
     
-    // Deep scan inside the backend response
+    // Deep scan (Fallback)
     const allValues = Object.values(data);
     for (const val of allValues) {
       if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
-        // If the object has 'excerpt' or 'content', it IS a blog! Catch it!
         if ('excerpt' in val[0] || 'content' in val[0] || 'slug' in val[0]) {
           return val;
         }
