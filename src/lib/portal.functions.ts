@@ -200,12 +200,11 @@ const blogSchema = z.object({
   author_bio: z.string().max(500).optional().nullable(),
   seo_title: z.string().max(100).optional().nullable(),
   seo_description: z.string().max(300).optional().nullable(),
-  focus_keywords: z.string().max(200).optional().nullable(),
+  focus_keywords: z.string().max(2000).optional().nullable(),
   og_image: z.string().max(1000).optional().nullable(),
   status: z.enum(["draft", "published"]).default("published"),
   published_at: z.string().optional().nullable(),
 });
-
 export const publicBlogPosts = createServerFn({ method: "GET" }).handler(async () => {
   const supabasePublic = createClient<Database>(
     process.env.SUPABASE_URL!,
