@@ -17,18 +17,23 @@ export const Route = createFileRoute("/photography")({
   component: PhotographyPage,
 });
 
+// यह फंक्शन चेक करेगा कि लिंक वीडियो का है या फोटो का
+const isVideoUrl = (url: string) => {
+  if (!url) return false;
+  return url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/i) !== null;
+};
+
 function PhotographyPage() {
   const fn = useServerFn(publicPhotographyItems);
   const { data = [] } = useQuery({ queryKey: ["public", "photography"], queryFn: () => fn() });
   
-  // Popup (Modal) में डाटा दिखाने के लिए State
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   return (
     <>
       <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
         
-        {/* --- Cinematic Motion Graphics Hero Banner --- */}
+        {/* --- Hero Banner --- */}
         <div className="relative -mt-10 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
           <div className="absolute top-10 left-1/4 w-72 h-72 bg-cyan-600/20 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
           <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none"></div>
@@ -45,11 +50,10 @@ function PhotographyPage() {
             </p>
           </div>
         </div>
-        {/* --- End Hero Banner --- */}
 
-        {/* --- Dynamic Photography Masonry Grid --- */}
+        {/* --- Dynamic Masonry Grid (Now supports Video!) --- */}
         <div className="max-w-7xl mx-auto px-6 pb-20 relative z-10">
-          {!data.length && <p className="text-center text-white/50 py-10">No photographs yet. Add some from the admin panel.</p>}
+          {!data.length && <p className="text-center text-white/50 py-10">No media yet. Add some from the admin panel.</p>}
           
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
             {data.map((p) => (
@@ -58,17 +62,30 @@ function PhotographyPage() {
                 onClick={() => setSelectedPhoto(p)}
                 className="break-inside-avoid relative group rounded-2xl overflow-hidden bg-[#050505] cursor-pointer border border-white/5 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.25)] hover:-translate-y-2"
               >
-                {/* Natural height image with smooth zoom on hover */}
-                <img src={p.cover_image} alt={p.title} className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out" />
+                {/* अगर लिंक वीडियो है तो <video> चलेगा, वरना <img> */}
+                {isVideoUrl(p.cover_image) ? (
+                  <video 
+                    src={p.cover_image} 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline 
+                    className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out"
+                  />
+                ) : (
+                  <img 
+                    src={p.cover_image} 
+                    alt={p.title} 
+                    className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out" 
+                  />
+                )}
                 
-                {/* Dark Gradient Overlay (Hidden by default, shows on hover) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
                 
-                {/* Text Container: Hidden by default, slides up and fades in on hover */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 z-20 pointer-events-none">
                   <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
                     <span className="inline-block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-cyan-400 mb-1">
-                      {p.location ?? "Studio"}
+                      {p.location ?? "Studio"} {isVideoUrl(p.cover_image) && "• Video"}
                     </span>
                     <h3 className="serif text-xl md:text-2xl text-white font-bold leading-tight">
                       {p.title}
@@ -79,7 +96,6 @@ function PhotographyPage() {
             ))}
           </div>
         </div>
-        {/* --- End Grid Section --- */}
 
         {/* --- 3D Services Section --- */}
         <div className="relative max-w-7xl mx-auto px-6 py-32 border-t border-white/10">
@@ -128,13 +144,12 @@ function PhotographyPage() {
         </div>
       </EditorialShell>
 
-      {/* --- Full View Popup (Modal) --- */}
+      {/* --- Full View Popup (Modal) - Video Support Added --- */}
       {selectedPhoto && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-md transition-opacity"
           onClick={() => setSelectedPhoto(null)}
         >
-          {/* Close Button (X) */}
           <button 
             className="absolute top-6 right-6 md:top-10 md:right-10 z-[110] text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all"
             onClick={() => setSelectedPhoto(null)}
@@ -142,18 +157,27 @@ function PhotographyPage() {
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
           
-          {/* Modal Box */}
           <div 
             className="max-w-5xl w-full max-h-[90vh] bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-[0_0_50px_rgba(0,0,0,0.8)]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Image Section */}
+            {/* Media Section */}
             <div className="md:w-3/5 overflow-hidden bg-black/50 flex items-center justify-center">
-              <img 
-                src={selectedPhoto.cover_image} 
-                alt={selectedPhoto.title} 
-                className="w-full h-auto max-h-[50vh] md:max-h-[90vh] object-contain" 
-              />
+              {isVideoUrl(selectedPhoto.cover_image) ? (
+                <video 
+                  src={selectedPhoto.cover_image} 
+                  autoPlay 
+                  loop 
+                  controls 
+                  className="w-full h-auto max-h-[50vh] md:max-h-[90vh] object-contain"
+                />
+              ) : (
+                <img 
+                  src={selectedPhoto.cover_image} 
+                  alt={selectedPhoto.title} 
+                  className="w-full h-auto max-h-[50vh] md:max-h-[90vh] object-contain" 
+                />
+              )}
             </div>
             
             {/* Text/Details Section */}
