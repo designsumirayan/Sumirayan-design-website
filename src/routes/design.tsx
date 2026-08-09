@@ -74,18 +74,19 @@ function DesignPage() {
                 onClick={() => setSelectedProject(p)}
                 className="break-inside-avoid relative group rounded-2xl overflow-hidden bg-[#050505] cursor-pointer border border-white/5 transition-all duration-500 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:-translate-y-2"
               >
-                {/* Natural height image */}
+                {/* Natural height image with smooth zoom on hover */}
                 <img src={p.cover_image} alt={p.title} className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out" />
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
+                {/* Dark Gradient Overlay (Hidden by default, shows on hover) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
                 
+                {/* Text Container: Hidden by default, slides up and fades in on hover */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 z-20 pointer-events-none">
-                  <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                    <span className="inline-block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-blue-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
+                    <span className="inline-block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-blue-400 mb-1">
                       {p.category}
                     </span>
-                    {/* Default: Light Text. On Hover: Bold Text */}
-                    <h3 className="serif text-xl md:text-2xl text-white/60 font-normal group-hover:font-bold group-hover:text-white transition-all duration-300 leading-tight">
+                    <h3 className="serif text-xl md:text-2xl text-white font-bold leading-tight">
                       {p.title}
                     </h3>
                   </div>
