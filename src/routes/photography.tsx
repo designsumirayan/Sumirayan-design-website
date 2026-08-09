@@ -51,7 +51,7 @@ function PhotographyPage() {
           </div>
         </div>
 
-        {/* --- Dynamic Masonry Grid (Now supports Video!) --- */}
+        {/* --- Dynamic Masonry Grid (Now supports Video and prevents download!) --- */}
         <div className="max-w-7xl mx-auto px-6 pb-20 relative z-10">
           {!data.length && <p className="text-center text-white/50 py-10">No media yet. Add some from the admin panel.</p>}
           
@@ -62,7 +62,7 @@ function PhotographyPage() {
                 onClick={() => setSelectedPhoto(p)}
                 className="break-inside-avoid relative group rounded-2xl overflow-hidden bg-[#050505] cursor-pointer border border-white/5 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.25)] hover:-translate-y-2"
               >
-                {/* अगर लिंक वीडियो है तो <video> चलेगा, वरना <img> */}
+                {/* अगर लिंक वीडियो है तो <video> चलेगा, वरना <img> (With Download Protection) */}
                 {isVideoUrl(p.cover_image) ? (
                   <video 
                     src={p.cover_image} 
@@ -70,12 +70,15 @@ function PhotographyPage() {
                     loop 
                     muted 
                     playsInline 
+                    controlsList="nodownload"
+                    onContextMenu={(e) => e.preventDefault()}
                     className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out"
                   />
                 ) : (
                   <img 
                     src={p.cover_image} 
                     alt={p.title} 
+                    onContextMenu={(e) => e.preventDefault()}
                     className="w-full h-auto object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out" 
                   />
                 )}
@@ -144,7 +147,7 @@ function PhotographyPage() {
         </div>
       </EditorialShell>
 
-      {/* --- Full View Popup (Modal) - Video Support Added --- */}
+      {/* --- Full View Popup (Modal) - Protected --- */}
       {selectedPhoto && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-md transition-opacity"
@@ -169,12 +172,15 @@ function PhotographyPage() {
                   autoPlay 
                   loop 
                   controls 
+                  controlsList="nodownload"
+                  onContextMenu={(e) => e.preventDefault()}
                   className="w-full h-auto max-h-[50vh] md:max-h-[90vh] object-contain"
                 />
               ) : (
                 <img 
                   src={selectedPhoto.cover_image} 
                   alt={selectedPhoto.title} 
+                  onContextMenu={(e) => e.preventDefault()}
                   className="w-full h-auto max-h-[50vh] md:max-h-[90vh] object-contain" 
                 />
               )}
