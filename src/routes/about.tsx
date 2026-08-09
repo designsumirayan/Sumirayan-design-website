@@ -44,7 +44,7 @@ function AboutPage() {
   ];
 
   // 👇 यहाँ पर अपनी प्रोफाइल फोटो का Cloudinary लिंक डालें 👇
-  const profileImageUrl = "https://res.cloudinary.com/iqvaoezc/image/upload/v1700000000/sumit-profile.jpg"; 
+  const profileImageUrl = "https://res.cloudinary.com/iqvaoezc/image/upload/v1786283423/sumit_singh_ijwkvf.png"; 
 
   return (
     <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
