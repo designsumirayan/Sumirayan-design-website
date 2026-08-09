@@ -213,3 +213,12 @@
     mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent 80%);
   }
 }
+/* --- Prevent Image & Video Downloading/Dragging --- */
+img, video {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
