@@ -39,8 +39,9 @@ function AboutPage() {
     { name: "Digital Business Growth Strategies", Icon: TrendingUp, color: "text-blue-400" },
     { name: "Portrait Art & Illustration", Icon: Palette, color: "text-purple-400" },
     { name: "Graphic Design & Branding", Icon: PenTool, color: "text-pink-400" },
-    { name: "Photography", Icon: Camera, color: "text-cyan-400" },
+    { name: "Photography, Videography", Icon: Camera, color: "text-cyan-400" },
     { name: "Video Editing", Icon: Video, color: "text-red-400" },
+    { name: "Web & Software Development", Icon: web, color: "text-yellow-400" },
   ];
 
   // 👇 यहाँ पर अपनी प्रोफाइल फोटो का Cloudinary लिंक डालें 👇
