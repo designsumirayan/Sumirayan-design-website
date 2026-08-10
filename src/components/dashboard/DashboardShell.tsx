@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Scene3D } from "@/components/three/Scene3D";
-import { GlobalHeader } from "@/components/site/GlobalHeader";
 import { Footer } from "@/components/landing/Footer";
 import { LogOut } from "lucide-react";
 import type { ReactNode } from "react";
@@ -28,9 +27,11 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-background text-white relative overflow-hidden">
       <Scene3D className="opacity-40" />
-      <GlobalHeader />
+      
+      {/* GlobalHeader यहाँ से हटा दिया गया है ताकि एडमिन पैनल में वेबसाइट का मेनू न दिखे */}
 
-      <main className="relative mx-auto max-w-7xl px-6 pt-32 md:pt-36 pb-16">
+      {/* Padding Top (pt) को कम कर दिया गया है ताकि ऊपर फालतू स्पेस न बचे */}
+      <main className="relative mx-auto max-w-7xl px-6 pt-12 md:pt-16 pb-16">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.22em] text-[oklch(0.78_0.12_258)]">{role} Portal</p>
@@ -49,7 +50,7 @@ export function DashboardShell({
             ))}
             <button
               onClick={onSignOut}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors"
             >
               <LogOut className="w-4 h-4" /> Sign out
             </button>
