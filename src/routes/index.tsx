@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { submitContact } from "@/lib/portal.functions";
 import { 
   ArrowRight, 
   Sparkles, 
@@ -312,7 +315,6 @@ export function Navbar() {
           "fixed z-50 left-1/2 -translate-x-1/2 w-[min(1400px,calc(100%-2rem))] transition-all duration-300 rounded-full",
           scrolled || mobileOpen
             ? "top-4 bg-[#050810]/95 backdrop-blur-xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] py-3 px-6"
-            // Changed bg-black/10 to bg-[#0a0f1e]/80 for a dark blue default background
             : "top-12 bg-[#0a0f1e]/80 backdrop-blur-md border border-white/10 py-4 px-8"
         )}
       >
@@ -411,7 +413,6 @@ const heroGalleryImages = [
   "https://picsum.photos/id/1024/500/700",
 ];
 
-// Small hand-drawn style curved arrow, used for the annotation callouts
 function CurvedArrow({ className = "", flip = false }: { className?: string; flip?: boolean }) {
   return (
     <svg
@@ -428,13 +429,11 @@ function CurvedArrow({ className = "", flip = false }: { className?: string; fli
   );
 }
 
-// The photo strip that pans left/right as the mouse moves across the hero
 function ScrollGallery() {
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const smoothX = useSpring(x, { stiffness: 55, damping: 20, mass: 0.6 });
 
-  // Expanding meta data to accommodate 21 images
   const cardMeta = [
     { rotate: -7, dy: 14 }, { rotate: 4, dy: -16 }, { rotate: -3, dy: 8 },
     { rotate: 6, dy: -10 }, { rotate: -5, dy: 16 }, { rotate: 3, dy: -12 },
@@ -450,7 +449,6 @@ function ScrollGallery() {
     const rect = trackRef.current.getBoundingClientRect();
     const relX = (e.clientX - rect.left) / rect.width;
     const clamped = Math.min(1, Math.max(0, relX));
-    // Adjusted maxShift to allow traversing the new 21-image gallery
     const maxShift = 1100; 
     x.set((clamped - 0.5) * -2 * maxShift);
   };
@@ -471,8 +469,8 @@ function ScrollGallery() {
             key={src + i}
             className="shrink-0 rounded-[20px] overflow-hidden border-4 border-white/90 shadow-[0_25px_45px_rgba(0,0,0,0.4)]"
             style={{
-              width: 140,   // Reduced size to easily fit desktop viewport height
-              height: 200,  // Reduced size to easily fit desktop viewport height
+              width: 140,   
+              height: 200,  
               transform: `rotate(${cardMeta[i].rotate}deg) translateY(${cardMeta[i].dy}px)`,
             }}
           >
@@ -493,7 +491,6 @@ function Hero() {
   return (
     <section
       id="top"
-      // Swapped min-h-screen to h-screen to strictly fit inside a desktop view without vertical scrolling
       className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-transparent pt-28 pb-8"
     >
       <div
@@ -910,24 +907,26 @@ function PortfolioGrid() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {clientList.map((client, idx) => (
-            <motion.div
+            <motion.a
+              href="/design"
               key={idx}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.04 }}
-              className="card-3d p-6 bg-black/40 border border-white/10 rounded-xl hover:bg-white/10 cursor-default group neon-hover backdrop-blur-md shadow-xl"
+              className="card-3d block p-6 bg-black/40 border border-white/10 rounded-xl hover:bg-white/10 cursor-pointer group neon-hover backdrop-blur-md shadow-xl"
             >
               <span className="text-[10px] font-black uppercase tracking-widest text-white/60 block mb-1">{client.type}</span>
-              <h4 className="text-base font-bold text-white group-hover:text-white/90 transition-colors mb-1">{client.name}</h4>
+              <h4 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors mb-1">{client.name}</h4>
               <p className="text-[11px] text-white/50 font-medium">{client.desc}</p>
-            </motion.div>
+            </motion.a>
           ))}
         </div>
       </div>
     </section>
   );
 }
+
 // ─── 10. NUMBERS / IMPACT SECTION ─────────────────────────────────────────────
 const impactStats = [
   { val: "150+", label: "Brands Served", icon: <Briefcase className="w-6 h-6" />, sub: "Across Bihar & beyond" },
@@ -1030,8 +1029,8 @@ function Testimonials() {
         <div className="torus-ring" style={{ width: "120px", height: "120px", borderWidth: "15px", borderTopColor: "#fff", borderLeftColor: "rgba(255,255,255,0.3)" }} />
       </div>
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        <div className="text-center mb-16 space-y-4">
+      <div className="max-w-5xl mx-auto relative z-10">
+        <div className="text-center mb-12 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/30 bg-white/10 text-[11px] text-white font-black uppercase tracking-widest backdrop-blur-sm">
             <Quote className="w-3.5 h-3.5" /> Client Reviews
           </div>
@@ -1040,7 +1039,7 @@ function Testimonials() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
           {testimonials.map((t, idx) => (
             <motion.div
               key={idx}
@@ -1048,16 +1047,16 @@ function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="card-3d bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-10 flex flex-col justify-between relative overflow-hidden neon-hover shadow-2xl"
+              className="card-3d bg-black/40 backdrop-blur-md border border-white/10 rounded-[2rem] p-6 md:p-8 flex flex-col justify-between relative overflow-hidden neon-hover shadow-2xl"
             >
-              <div className="absolute top-6 right-8 text-6xl text-white/10 font-black select-none">"</div>
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />)}
+              <div className="absolute top-4 right-6 text-6xl text-white/5 font-black select-none">"</div>
+              <div className="flex gap-1 mb-4 relative z-10">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />)}
               </div>
-              <p className="text-white/90 text-base font-medium leading-relaxed mb-8 drop-shadow-sm">"{t.text}"</p>
-              <div>
-                <h4 className="text-base font-bold text-white">{t.name}</h4>
-                <span className="text-[11px] font-black uppercase tracking-widest text-white/70">{t.role}</span>
+              <p className="text-white/80 text-sm font-medium leading-relaxed mb-6 drop-shadow-sm relative z-10">"{t.text}"</p>
+              <div className="relative z-10">
+                <h4 className="text-sm font-bold text-white mb-0.5">{t.name}</h4>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{t.role}</span>
               </div>
             </motion.div>
           ))}
@@ -1117,7 +1116,7 @@ function LocationSection() {
                 <Navigation className="w-4 h-4" /> Get Directions
               </a>
               <a
-                href="https://wa.me/918936841201?text=Hello%20Sumirayan%20Design,%20I%20want%20to%20discuss%20a%20project"
+                href="https://wa.me/918936841201?text=Hello%20Sumirayan%20Design,%20I%20want%20to%20discuss%20a%20project!"
                 target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/40 text-white px-6 py-3 text-sm font-black uppercase tracking-wider hover:bg-white/10 transition-colors backdrop-blur-md"
               >
@@ -1178,12 +1177,40 @@ function LocationSection() {
 
 // ─── 14. CTA / CONTACT FORM ────────────────────────────────────────────────────
 function Contact() {
+  const submitMsg = useServerFn(submitContact);
   const [sent, setSent] = useState(false);
   const [service, setService] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitMut = useMutation({
+    mutationFn: (v: any) => submitMsg({ data: v }),
+    onSuccess: () => {
+      setSent(true);
+      setTimeout(() => setSent(false), 4000);
+    },
+    onError: (err: any) => {
+      alert("Error sending message:\n\n" + (err?.message || "Please try again later."));
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
+    const fd = new FormData(e.currentTarget);
+    
+    const name = String(fd.get("name") || "").trim();
+    const email = String(fd.get("email") || "").trim();
+    const phone = String(fd.get("phone") || "").trim();
+    const details = String(fd.get("details") || "").trim();
+
+    const formattedMessage = `SERVICE REQUEST: ${service || 'General'}\n\nPhone: ${phone}\n\nProject Details:\n${details}`;
+
+    submitMut.mutate({
+      name,
+      email,
+      company: "Website Lead",
+      message: formattedMessage
+    });
+    
+    (e.target as HTMLFormElement).reset();
   };
 
   return (
@@ -1206,30 +1233,30 @@ function Contact() {
 
         <div className="bg-black/50 border border-white/20 rounded-3xl p-8 md:p-12 text-left shadow-2xl backdrop-blur-xl" style={{ boxShadow: "0 40px 80px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.1)" }}>
           {sent ? (
-            <div className="py-12 text-center">
+            <div className="py-12 text-center animate-in fade-in zoom-in duration-500">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/20 flex items-center justify-center border border-white/30 shadow-xl">
                 <CheckCircle2 className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-black text-white drop-shadow-md">Request Received!</h3>
               <p className="text-white/80 mt-2">Our Patna team will be in touch within 24 hours.</p>
-              <button onClick={() => setSent(false)} className="mt-6 text-sm font-bold text-white underline hover:text-gray-300">Submit another enquiry</button>
+              <button onClick={() => setSent(false)} className="mt-6 text-sm font-bold text-white underline hover:text-gray-300 transition-colors">Submit another enquiry</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-[11px] uppercase tracking-widest text-white/70 font-bold block mb-2">Your Name *</label>
-                  <input required type="text" placeholder="Rahul Kumar" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
+                  <input required name="name" type="text" placeholder="Rahul Kumar" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
                 </div>
                 <div>
                   <label className="text-[11px] uppercase tracking-widest text-white/70 font-bold block mb-2">Email Address *</label>
-                  <input required type="email" placeholder="rahul@company.com" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
+                  <input required name="email" type="email" placeholder="rahul@company.com" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-[11px] uppercase tracking-widest text-white/70 font-bold block mb-2">Phone Number</label>
-                  <input type="tel" placeholder="+91 98765 43210" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
+                  <input name="phone" type="tel" placeholder="+91 98765 43210" className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors placeholder:text-white/40" />
                 </div>
                 <div>
                   <label className="text-[11px] uppercase tracking-widest text-white/70 font-bold block mb-2">Service Needed</label>
@@ -1246,10 +1273,10 @@ function Contact() {
               </div>
               <div>
                 <label className="text-[11px] uppercase tracking-widest text-white/70 font-bold block mb-2">Project Details *</label>
-                <textarea required rows={4} placeholder="Tell us about your brand, project goals, and timeline..." className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors resize-none placeholder:text-white/40" />
+                <textarea required name="details" rows={4} placeholder="Tell us about your brand, project goals, and timeline..." className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:border-white focus:outline-none transition-colors resize-none placeholder:text-white/40" />
               </div>
-              <button type="submit" className="w-full btn-premium rounded-xl bg-white text-black py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl">
-                Submit Request <ArrowRight className="w-4 h-4" />
+              <button type="submit" disabled={submitMut.isPending} className="w-full btn-premium rounded-xl bg-white text-black py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl disabled:opacity-50">
+                {submitMut.isPending ? "Sending..." : "Submit Request"} <ArrowRight className="w-4 h-4 ml-1" />
               </button>
               <p className="text-[11px] text-white/50 text-center">We respond within 24 hours. Based in Patna, Bihar.</p>
             </form>
