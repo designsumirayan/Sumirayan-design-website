@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   Palette, 
   PenTool, 
-  Camera, 
+  Camera,
+  Globe,
   Video, 
   Quote, 
   Instagram, 
@@ -41,7 +42,7 @@ function AboutPage() {
     { name: "Graphic Design & Branding", Icon: PenTool, color: "text-pink-400" },
     { name: "Photography, Videography", Icon: Camera, color: "text-cyan-400" },
     { name: "Video Editing", Icon: Video, color: "text-red-400" },
-    { name: "Web & Software Development", Icon: web, color: "text-yellow-400" },
+    { name: "Web & Software Development", Icon: Globe, color: "text-yellow-400" },
   ];
 
   // 👇 यहाँ पर अपनी प्रोफाइल फोटो का Cloudinary लिंक डालें 👇
