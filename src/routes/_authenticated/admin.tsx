@@ -19,7 +19,7 @@ import {
 } from "@/lib/content.functions";
 import {
   Trash2, Plus, CheckCircle2, Clock, Users, Mail, TrendingUp, ListTodo, ShieldCheck, Archive,
-  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap, RefreshCw
+  FileText, LayoutGrid, Pencil, Search, Tags as TagsIcon, Globe, UserCircle, Settings, FolderOpen, Images, Briefcase, Calendar, GraduationCap, RefreshCw, AlertCircle
 } from "lucide-react";
 
 import logoUrl from "@/assets/sumirayan design.png";
@@ -55,7 +55,8 @@ function AdminPage() {
   const { data, isLoading, refetch } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
   const { data: perf } = useQuery({ queryKey: ["admin", "performance"], queryFn: () => perfFn() });
 
-  const forceSync = () => { qc.invalidateQueries(); setTimeout(() => window.location.reload(), 300); };
+  // 🔥 FIX: Removed window.location.reload() to prevent data loss on page refresh
+  const forceSync = () => { qc.invalidateQueries(); };
 
   const createMut = useMutation({ mutationFn: (input: any) => create({ data: input }), onSuccess: forceSync });
   const deleteMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: forceSync });
@@ -64,29 +65,24 @@ function AdminPage() {
   const removeRoleMut = useMutation({ mutationFn: (v: any) => removeRole({ data: v }), onSuccess: forceSync });
   const delContactMut = useMutation({ mutationFn: (id: string) => delContact({ data: { id } }), onSuccess: forceSync });
   
-  const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }), onSuccess: forceSync, onError: (e) => alert("Error: " + e.message) });
+  const createBlogMut = useMutation({ mutationFn: (v: any) => createBlog({ data: v }) });
   const deleteBlogMut = useMutation({ mutationFn: (id: string) => deleteBlog({ data: { id } }), onSuccess: forceSync });
 
-  // 🚀 FIXED DATA MAPPING: Now exactly matches your Supabase Table names
   const tasks = Array.isArray(data?.tasks) ? data.tasks : [];
   const members = Array.isArray(data?.members) ? data.members : Array.isArray((data as any)?.profiles) ? (data as any).profiles : [];
   const roles = Array.isArray(data?.roles) ? data.roles : Array.isArray((data as any)?.user_roles) ? (data as any).user_roles : [];
   const contacts = Array.isArray(data?.contacts) ? data.contacts : Array.isArray((data as any)?.contact_messages) ? (data as any).contact_messages : [];
   
-  // 🔥 FINAL BLOG FIX: Directly targeting the 'blog_posts' table you showed in the screenshot
   const blogs = useMemo(() => {
     if (!data) return [];
-    if (Array.isArray((data as any).blog_posts)) return (data as any).blog_posts; // Matches your DB screenshot
+    if (Array.isArray((data as any).blog_posts)) return (data as any).blog_posts;
     if (Array.isArray((data as any).blogs)) return (data as any).blogs;
     if (Array.isArray((data as any).posts)) return (data as any).posts;
     
-    // Deep scan (Fallback)
     const allValues = Object.values(data);
     for (const val of allValues) {
       if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
-        if ('excerpt' in val[0] || 'content' in val[0] || 'slug' in val[0]) {
-          return val;
-        }
+        if ('excerpt' in val[0] || 'content' in val[0] || 'slug' in val[0]) return val;
       }
     }
     return [];
@@ -130,7 +126,7 @@ function AdminPage() {
             <div className="text-xs text-white/50">Manage everything happening across the agency.</div>
             </div>
         </div>
-        <button onClick={() => { refetch(); qc.invalidateQueries(); setTimeout(() => window.location.reload(), 200); }} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-full transition active:scale-95 shadow-md">
+        <button onClick={() => { refetch(); forceSync(); }} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-full transition active:scale-95 shadow-md">
             <RefreshCw className="w-4 h-4" /> Sync Database
         </button>
       </div>
@@ -157,8 +153,21 @@ function AdminPage() {
         {tab === "overview" && ( <OverviewTab openTasks={openTasks} perf={perf} memberName={memberName} /> )}
         {tab === "portfolio" && <PortfolioContentTab />}
         {tab === "content" && <MiscContentTab />}
-        {tab === "blog" && ( <BlogTab posts={blogs} rawData={data} creating={createBlogMut.isPending} onCreate={(input: any) => createBlogMut.mutate(input)} onDelete={(id: string) => deleteBlogMut.mutate(id)} /> )}
-        {tab === "tasks" && ( <TasksTab openTasks={openTasks} oldTasks={oldTasks} members={members} memberName={memberName} onCreate={(v: any) => createMut.mutate(v)} onDelete={(id: string) => deleteMut.mutate(id)} onUpdate={(id: string, patch: any) => statusMut.mutate({ id, ...patch })} creating={createMut.isPending} /> )}
+        {tab === "blog" && ( 
+          <BlogTab 
+            posts={blogs} 
+            rawData={data} 
+            creating={createBlogMut.isPending} 
+            onCreate={(input: any, onSuccess: () => void, onError: (e: any) => void) => {
+                createBlogMut.mutate(input, {
+                    onSuccess: () => { forceSync(); onSuccess(); },
+                    onError: (err) => { onError(err); }
+                });
+            }} 
+            onDelete={(id: string) => deleteBlogMut.mutate(id)} 
+          /> 
+        )}
+        {tab === "tasks" && ( <TasksTab openTasks={openTasks} oldTasks={oldTasks} members={members} memberName={memberName} onCreate={(v: any) => createMut.mutate(v, { onSuccess: forceSync })} onDelete={(id: string) => deleteMut.mutate(id)} onUpdate={(id: string, patch: any) => statusMut.mutate({ id, ...patch })} creating={createMut.isPending} /> )}
         {tab === "team" && ( <TeamTab members={members} userRoles={userRoles} onAssign={(user_id: string, role: Role) => assignMut.mutate({ user_id, role })} onRemove={(user_id: string, role: Role) => removeRoleMut.mutate({ user_id, role })} /> )}
         {tab === "contacts" && ( <ContactsTab contacts={contacts} onDelete={(id: string) => delContactMut.mutate(id)} /> )}
         {tab === "performance" && <PerformanceTab perf={perf} />}
@@ -473,35 +482,67 @@ function TeamTab({ members, userRoles, onAssign, onRemove }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 6. BLOG TAB (With Data Integrity Check & Diagnostics)
+// 6. BLOG TAB (🔥 FIX: Data Integrity & Error Alert)
 // ─────────────────────────────────────────────────────────────
 type BlogInput = { title: string; slug: string; category: string; tags?: string; excerpt: string; content: string; image_url: string; image_alt?: string; author_name: string; author_bio?: string; seo_title?: string; seo_description?: string; focus_keywords?: string; og_image?: string; status: "draft" | "published"; published_at?: string; };
 type BlogPost = BlogInput & { id: string; created_at: string };
 
 function BlogTab({ posts, rawData, creating, onCreate, onDelete }: any) {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   return (
       <div className="grid gap-6 xl:grid-cols-[1fr_380px] items-start">
         <form
           key={editingPost?.id || 'new_blog'}
           onSubmit={(e) => {
             e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            const title = String(fd.get("title") || "");
+            setErrorMsg(null);
+            
+            const formEl = e.currentTarget;
+            const fd = new FormData(formEl);
+            
+            const title = String(fd.get("title") || "").trim();
+            const content = String(fd.get("content") || "").trim();
+            const excerpt = String(fd.get("excerpt") || "").trim();
+
+            // Client-side Validations
+            if (content.length < 10) {
+              setErrorMsg("Blog Content is too short. You must write a proper article.");
+              formEl.content.focus();
+              return;
+            }
+
             let slug = String(fd.get("slug") || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
             if(!slug) slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            
             const payload: BlogInput = {
               title, slug, category: String(fd.get("category") || ""), tags: String(fd.get("tags") || ""),
               image_url: String(fd.get("image_url") || ""), image_alt: String(fd.get("image_alt") || ""),
-              excerpt: String(fd.get("excerpt") || ""), content: String(fd.get("content") || ""),
+              excerpt, content,
               seo_title: String(fd.get("seo_title") || ""), seo_description: String(fd.get("seo_description") || ""),
               focus_keywords: String(fd.get("focus_keywords") || ""), og_image: String(fd.get("og_image") || ""),
               author_name: String(fd.get("author_name") || "Sumit Singh"), author_bio: String(fd.get("author_bio") || ""),
               status: (fd.get("status") as "draft" | "published") || "published",
               published_at: fd.get("published_at") ? new Date(String(fd.get("published_at"))).toISOString() : new Date().toISOString(),
             };
-            if(editingPost) { onDelete(editingPost.id); setTimeout(() => { onCreate(payload); setEditingPost(null); }, 300); } 
-            else { onCreate(payload); e.currentTarget.reset(); }
+
+            // Call parent onCreate with success & error callbacks so we control form reset
+            if(editingPost) { 
+              onDelete(editingPost.id); 
+              setTimeout(() => { 
+                onCreate(payload, () => {
+                   setEditingPost(null);
+                   formEl.reset();
+                   alert("Blog updated successfully!");
+                }, (err: any) => setErrorMsg("Database Error: " + err.message)); 
+              }, 300); 
+            } else { 
+              onCreate(payload, () => {
+                 formEl.reset();
+                 alert("Blog published successfully!");
+              }, (err: any) => setErrorMsg("Database Error: " + err.message));
+            }
           }}
           className="glass-strong rounded-2xl p-4 md:p-6 space-y-8"
         >
@@ -509,10 +550,25 @@ function BlogTab({ posts, rawData, creating, onCreate, onDelete }: any) {
               <h2 className="font-display text-xl flex items-center gap-2">{editingPost ? <Pencil className="w-5 h-5 text-[#1f5fb7]" /> : <FileText className="w-5 h-5 text-[#1f5fb7]" />} {editingPost ? "Edit Blog Post" : "Add New Blog Post"}</h2>
               {editingPost && (<button type="button" onClick={() => setEditingPost(null)} className="text-xs text-white/50 hover:text-white bg-white/5 px-3 py-1 rounded-full">Cancel Edit</button>)}
           </div>
+
+          {/* 🔥 Red Alert Box for Errors */}
+          {errorMsg && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-300 p-4 rounded-xl text-sm flex items-start gap-3 shadow-lg">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                      <strong className="font-bold block mb-1">Could not save post</strong>
+                      {errorMsg}
+                  </div>
+              </div>
+          )}
+
           <div className="space-y-4">
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider flex items-center gap-2"><LayoutGrid className="w-4 h-4 text-blue-400" /> Basic Information</h3>
               <div className="grid gap-4">
-                  <label className="block"><span className="text-xs text-white/60 mb-1 block">Blog Title *</span><input name="title" defaultValue={editingPost?.title} required maxLength={180} placeholder="Catchy title for the blog" className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm focus:border-blue-500/50 outline-none" /></label>
+                  <label className="block">
+                    <span className="text-xs text-white/60 mb-1 block">Blog Title *</span>
+                    <input name="title" defaultValue={editingPost?.title} required maxLength={180} placeholder="Catchy title for the blog" className={`w-full rounded-lg bg-white/5 border px-3 py-2 text-sm focus:outline-none transition-colors ${errorMsg?.includes('title') ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-blue-500/50'}`} />
+                  </label>
                   <label className="block">
                       <span className="text-xs text-white/60 mb-1 block">URL Slug (Auto-generated if empty)</span>
                       <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden focus-within:border-blue-500/50">
@@ -536,8 +592,14 @@ function BlogTab({ posts, rawData, creating, onCreate, onDelete }: any) {
                       <label className="block"><span className="text-xs text-white/60 mb-1 block">Featured Image URL *</span><input name="image_url" defaultValue={editingPost?.image_url} required type="url" placeholder="https://res.cloudinary.com/..." className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm focus:border-purple-500/50 outline-none" /></label>
                       <label className="block"><span className="text-xs text-white/60 mb-1 block">Image Alt Text (For SEO & Accessibility)</span><input name="image_alt" defaultValue={editingPost?.image_alt} placeholder="Describe the image..." className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm focus:border-purple-500/50 outline-none" /></label>
                   </div>
-                  <label className="block"><span className="text-xs text-white/60 mb-1 block">Short Excerpt (Shows on blog list) *</span><textarea name="excerpt" defaultValue={editingPost?.excerpt} required maxLength={400} rows={2} placeholder="A brief summary to hook the reader..." className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm focus:border-purple-500/50 outline-none resize-none" /></label>
-                  <label className="block"><span className="text-xs text-white/60 mb-1 block flex justify-between"><span>Full Blog Content (Supports Markdown/HTML) *</span><a href="https://markdownguide.org/basic-syntax/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Formatting Guide</a></span><textarea name="content" defaultValue={editingPost?.content} required rows={12} placeholder="Write your amazing article here..." className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-3 text-sm focus:border-purple-500/50 outline-none font-mono" /></label>
+                  <label className="block">
+                    <span className="text-xs text-white/60 mb-1 block">Short Excerpt (Shows on blog list) *</span>
+                    <textarea name="excerpt" defaultValue={editingPost?.excerpt} required maxLength={400} rows={2} placeholder="A brief summary to hook the reader..." className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm focus:border-purple-500/50 outline-none resize-none" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-white/60 mb-1 block flex justify-between"><span>Full Blog Content (Supports Markdown/HTML) *</span><a href="https://markdownguide.org/basic-syntax/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Formatting Guide</a></span>
+                    <textarea name="content" defaultValue={editingPost?.content} required rows={12} placeholder="Write your amazing article here..." className={`w-full rounded-lg border px-3 py-3 text-sm focus:outline-none font-mono transition-colors ${errorMsg?.includes('Content') ? 'border-red-500 bg-red-500/5 focus:border-red-500' : 'border-white/10 bg-white/5 focus:border-purple-500/50'}`} />
+                  </label>
               </div>
           </div>
           <div className="space-y-4 pt-4 border-t border-white/5">
@@ -580,12 +642,10 @@ function BlogTab({ posts, rawData, creating, onCreate, onDelete }: any) {
           <h2 className="font-display text-xl mb-4 flex items-center gap-2 shrink-0">Manage Posts <span className="bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">{posts.length}</span></h2>
           <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
             
-            {/* The Debug text will show what keys the database returned if it can't find the blog */}
             {posts.length === 0 && (
                 <div className="text-center py-10 border border-dashed border-white/10 rounded-xl">
                     <FileText className="w-8 h-8 text-white/20 mx-auto mb-2" />
                     <p className="text-white/50 text-sm">No blog posts yet.</p>
-                    <p className="text-white/20 text-[10px] mt-6 font-mono break-words">DB Keys: {rawData ? Object.keys(rawData).join(', ') : 'null'}</p>
                 </div>
             )}
 
@@ -752,10 +812,11 @@ function ContentManagerPanel({ def, category }: { def: any, category: string }) 
   const { data = [], isLoading } = useQuery({ queryKey, queryFn: () => listFn() });
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  const forceSync = () => { qc.invalidateQueries(); setTimeout(() => window.location.reload(), 300); };
+  // 🔥 FIX: Replaced reload here as well
+  const forceSync = () => { qc.invalidateQueries(); };
 
-  const createMut = useMutation({ mutationFn: (input: Record<string, unknown>) => createFn({ data: input }), onSuccess: forceSync, onError: (e) => alert(e.message) });
-  const deleteMut = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }), onSuccess: forceSync });
+  const createMut = useMutation({ mutationFn: (input: Record<string, unknown>) => createFn({ data: input }) });
+  const deleteMut = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }) });
 
   const getDefault = (f: FieldDef) => {
     if (!editingItem) return f.defaultValue;
@@ -775,6 +836,7 @@ function ContentManagerPanel({ def, category }: { def: any, category: string }) 
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
+          const formEl = e.currentTarget;
           const payload: Record<string, unknown> = {};
           
           for (const f of def.fields) {
@@ -799,8 +861,30 @@ function ContentManagerPanel({ def, category }: { def: any, category: string }) 
             }
           }
 
-          if (editingItem) { deleteMut.mutate(editingItem.id, { onSuccess: () => { setTimeout(() => createMut.mutate(payload), 300); } }); } 
-          else { createMut.mutate(payload); }
+          if (editingItem) { 
+              deleteMut.mutate(editingItem.id, { 
+                  onSuccess: () => { 
+                      setTimeout(() => createMut.mutate(payload, {
+                          onSuccess: () => {
+                              forceSync();
+                              setEditingItem(null);
+                              formEl.reset();
+                              alert("Updated successfully!");
+                          },
+                          onError: (err) => alert("Error: " + err.message)
+                      }), 300); 
+                  } 
+              }); 
+          } else { 
+              createMut.mutate(payload, {
+                  onSuccess: () => {
+                      forceSync();
+                      formEl.reset();
+                      alert("Created successfully!");
+                  },
+                  onError: (err) => alert("Error: " + err.message)
+              }); 
+          }
         }}
         className="glass-strong rounded-2xl p-4 md:p-6 space-y-6 relative"
       >
