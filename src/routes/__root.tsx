@@ -80,7 +80,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Premium design studio in Patna, Bihar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@SumirayanDesign" },
     ],
     links: [
       {
@@ -101,8 +100,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      {/* यहाँ बॉडी टैग में राइट-क्लिक ब्लॉक करने का कोड लगा दिया गया है */}
-      <body onContextMenu={(e) => e.preventDefault()}>
+      <body>
         {children}
         <Scripts />
       </body>

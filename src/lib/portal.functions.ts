@@ -17,14 +17,18 @@ export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    
+
     // '*' इस्तेमाल करने से यह डेटाबेस के सारे नए/पुराने कॉलम्स अपने आप उठा लेगा और कभी क्रैश नहीं होगा
     const [tasks, projects, members, roles, contacts, blogs] = await Promise.all([
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("projects").select("*"),
       supabase.from("profiles").select("*"),
       supabase.from("user_roles").select("*"),
-      supabase.from("contact_messages").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase
+        .from("contact_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
       supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
     ]);
 
@@ -55,18 +59,24 @@ export const adminCreateTask = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.assigned_to) {
-      await supabase.from("user_roles").upsert({ user_id: data.assigned_to, role: "employee" }, { onConflict: "user_id,role" });
+      await supabase
+        .from("user_roles")
+        .upsert({ user_id: data.assigned_to, role: "employee" }, { onConflict: "user_id,role" });
     }
-    const { data: row, error } = await supabase.from("tasks").insert({
-      title: data.title,
-      description: data.description ?? null,
-      project_id: data.project_id ?? null,
-      assigned_to: data.assigned_to ?? null,
-      priority: data.priority,
-      due_at: data.due_at ?? null,
-      created_by: userId,
-      status: "pending",
-    }).select().single();
+    const { data: row, error } = await supabase
+      .from("tasks")
+      .insert({
+        title: data.title,
+        description: data.description ?? null,
+        project_id: data.project_id ?? null,
+        assigned_to: data.assigned_to ?? null,
+        priority: data.priority,
+        due_at: data.due_at ?? null,
+        created_by: userId,
+        status: "pending",
+      })
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     if (data.assigned_to) {
       await supabase.from("notifications").insert({
@@ -90,21 +100,37 @@ export const adminDeleteTask = createServerFn({ method: "POST" })
   });
 
 // ─── Admin: update any task ─────────────────────────────────────────────────
-const taskStatusEnum = z.enum(["pending", "working", "in_progress", "done", "completed", "delayed"]);
+const taskStatusEnum = z.enum([
+  "pending",
+  "working",
+  "in_progress",
+  "done",
+  "completed",
+  "delayed",
+]);
 
 export const adminUpdateTaskStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    id: z.string().uuid(),
-    status: taskStatusEnum.optional(),
-    remark: z.string().max(2000).optional().nullable(),
-    expected_completion_at: z.string().optional().nullable(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: taskStatusEnum.optional(),
+        remark: z.string().max(2000).optional().nullable(),
+        expected_completion_at: z.string().optional().nullable(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    const patch: { status?: typeof data.status; remark?: string | null; expected_completion_at?: string | null } = {};
+    const patch: {
+      status?: typeof data.status;
+      remark?: string | null;
+      expected_completion_at?: string | null;
+    } = {};
     if (data.status) patch.status = data.status;
     if (data.remark !== undefined) patch.remark = data.remark;
-    if (data.expected_completion_at !== undefined) patch.expected_completion_at = data.expected_completion_at || null;
+    if (data.expected_completion_at !== undefined)
+      patch.expected_completion_at = data.expected_completion_at || null;
     const { error } = await context.supabase.from("tasks").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -134,8 +160,11 @@ export const adminRemoveRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("user_roles").delete()
-      .eq("user_id", data.user_id).eq("role", data.role);
+    const { error } = await context.supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.user_id)
+      .eq("role", data.role);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -154,24 +183,30 @@ export const adminMonthlyPerformance = createServerFn({ method: "GET" })
       supabase.from("tasks").select("id,assigned_to,status,completed_at,created_at,priority"),
     ]);
 
-    const rows = (members ?? []).map((m) => {
-      const mine = (tasks ?? []).filter((t) => t.assigned_to === m.id);
-      const completedThisMonth = mine.filter(
-        (t) => (t.status === "completed" || t.status === "done") && t.completed_at && new Date(t.completed_at) >= monthStart,
-      );
-      const open = mine.filter((t) => t.status !== "completed" && t.status !== "done");
-      const total = mine.length;
-      const score = total === 0 ? 0 : Math.round((completedThisMonth.length / Math.max(total, 1)) * 100);
-      return {
-        id: m.id,
-        name: m.full_name ?? "Unnamed",
-        specialty: m.specialty,
-        total,
-        open: open.length,
-        completedThisMonth: completedThisMonth.length,
-        score,
-      };
-    }).sort((a, b) => b.completedThisMonth - a.completedThisMonth);
+    const rows = (members ?? [])
+      .map((m) => {
+        const mine = (tasks ?? []).filter((t) => t.assigned_to === m.id);
+        const completedThisMonth = mine.filter(
+          (t) =>
+            (t.status === "completed" || t.status === "done") &&
+            t.completed_at &&
+            new Date(t.completed_at) >= monthStart,
+        );
+        const open = mine.filter((t) => t.status !== "completed" && t.status !== "done");
+        const total = mine.length;
+        const score =
+          total === 0 ? 0 : Math.round((completedThisMonth.length / Math.max(total, 1)) * 100);
+        return {
+          id: m.id,
+          name: m.full_name ?? "Unnamed",
+          specialty: m.specialty,
+          total,
+          open: open.length,
+          completedThisMonth: completedThisMonth.length,
+          score,
+        };
+      })
+      .sort((a, b) => b.completedThisMonth - a.completedThisMonth);
 
     return { monthStart: monthStart.toISOString(), rows };
   });
@@ -188,12 +223,13 @@ export const adminDeleteContact = createServerFn({ method: "POST" })
 
 // ─── Blog: FULL SCHEMA FOR NEW FIELDS ───────────────────────────────────────
 const blogSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(180),
   slug: z.string().max(200).optional().nullable(),
   category: z.string().trim().min(1).max(80),
   tags: z.string().max(500).optional().nullable(),
   excerpt: z.string().trim().max(1000).optional().nullable(),
-  content: z.string().trim().min(1),
+  content: z.string().trim().min(20).max(8000),
   image_url: z.string().url().max(1000),
   image_alt: z.string().max(200).optional().nullable(),
   author_name: z.string().trim().max(120).default("Sumirayan Design").optional().nullable(),
@@ -216,6 +252,7 @@ export const publicBlogPosts = createServerFn({ method: "GET" }).handler(async (
     .from("blog_posts")
     .select("*")
     .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -225,37 +262,33 @@ export const adminCreateBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => blogSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const payload = { ...data };
-    
-    // Auto-generate slug dynamically if completely missing
-    if (!payload.slug) {
-      payload.slug = `${toSlug(payload.title)}-${Date.now()}`;
-    }
-
-    const { data: row, error } = await context.supabase
-      .from("blog_posts")
-      .insert({
-          title: payload.title,
-          slug: payload.slug,
-          category: payload.category,
-          tags: payload.tags,
-          excerpt: payload.excerpt,
-          content: payload.content,
-          image_url: payload.image_url,
-          image_alt: payload.image_alt,
-          author_name: payload.author_name,
-          author_bio: payload.author_bio,
-          seo_title: payload.seo_title,
-          seo_description: payload.seo_description,
-          focus_keywords: payload.focus_keywords,
-          og_image: payload.og_image,
-          status: payload.status,
-          published_at: payload.published_at || new Date().toISOString(),
-          created_by: context.userId
-      })
+    const { data: allowed, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleError || !allowed) throw new Error("Forbidden");
+    const { id, ...input } = data;
+    const payload = {
+      ...input,
+      slug: input.slug || toSlug(input.title) + "-" + Date.now(),
+      author_name: input.author_name || "Sumirayan Design",
+      excerpt: input.excerpt || "",
+      published_at: input.published_at || new Date().toISOString(),
+    };
+    if (!payload.slug) payload.slug = toSlug(payload.title) + "-" + Date.now();
+    const query = context.supabase.from("blog_posts");
+    const { data: row, error } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({
+            ...payload,
+            created_by: context.userId,
+            published_at: payload.published_at || new Date().toISOString(),
+          })
+    )
       .select()
       .single();
-      
+
     if (error) throw new Error(error.message);
     return row;
   });
@@ -276,7 +309,9 @@ export const myTasks = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("tasks")
-      .select("id,title,description,status,priority,due_at,project_id,created_at,completed_at,remark,expected_completion_at")
+      .select(
+        "id,title,description,status,priority,due_at,project_id,created_at,completed_at,remark,expected_completion_at",
+      )
       .eq("assigned_to", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -287,19 +322,26 @@ export const myTasks = createServerFn({ method: "GET" })
 export const updateTaskStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({
-      id: z.string().uuid(),
-      status: taskStatusEnum.optional(),
-      remark: z.string().max(2000).optional().nullable(),
-      expected_completion_at: z.string().optional().nullable(),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        status: taskStatusEnum.optional(),
+        remark: z.string().max(2000).optional().nullable(),
+        expected_completion_at: z.string().optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: { status?: typeof data.status; remark?: string | null; expected_completion_at?: string | null } = {};
+    const patch: {
+      status?: typeof data.status;
+      remark?: string | null;
+      expected_completion_at?: string | null;
+    } = {};
     if (data.status) patch.status = data.status;
     if (data.remark !== undefined) patch.remark = data.remark;
-    if (data.expected_completion_at !== undefined) patch.expected_completion_at = data.expected_completion_at || null;
+    if (data.expected_completion_at !== undefined)
+      patch.expected_completion_at = data.expected_completion_at || null;
     const { error } = await supabase
       .from("tasks")
       .update(patch)
@@ -324,16 +366,38 @@ export const myNotifications = createServerFn({ method: "GET" })
 // ─── Public contact form ────────────────────────────────────────────────────
 export const submitContact = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    z.object({
-      name: z.string().min(1).max(120),
-      email: z.string().email().max(200),
-      company: z.string().max(200).optional().nullable(),
-      message: z.string().min(5).max(2000),
-    }).parse(d),
+    z
+      .object({
+        name: z.string().min(1).max(120),
+        email: z.string().email().max(200),
+        company: z.string().max(200).optional().nullable(),
+        message: z.string().min(5).max(2000),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("contact_messages").insert(data);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const publicBlogPost = createServerFn({ method: "GET" })
+  .inputValidator((input) => z.object({ slug: z.string().min(1).max(200) }).parse(input))
+  .handler(async ({ data }) => {
+    const db = createClient<Database>(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const field = z.string().uuid().safeParse(data.slug).success ? "id" : "slug";
+    const { data: post, error } = await db
+      .from("blog_posts")
+      .select("*")
+      .eq(field, data.slug)
+      .eq("status", "published")
+      .lte("published_at", new Date().toISOString())
+      .maybeSingle();
+    if (error) throw new Error("The article could not be loaded.");
+    return post;
   });

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { GlobalHeader } from "@/components/site/GlobalHeader";
 import { Footer } from "@/components/landing/Footer";
-import { Scene3D } from "@/components/three/Scene3D";
 
 /**
  * Site editorial shell — uses the brand dark/blue system so these content pages
@@ -56,11 +55,9 @@ export function EditorialShell({
         .editorial-scope .group-hover\\:text-\\[\\#e85d3a\\] { transition: color .3s; }
         .editorial-scope .group:hover .group-hover\\:text-\\[\\#e85d3a\\] { color: oklch(0.72 0.22 25) !important; }
       `}</style>
-
-      <Scene3D className="opacity-30" />
       <GlobalHeader />
 
-      <main className="relative mx-auto max-w-7xl px-6 py-16 md:py-20">{children}</main>
+      <main id="main-content" className="relative mx-auto max-w-7xl px-6 py-16 md:py-20">{children}</main>
 
       <Footer />
     </div>

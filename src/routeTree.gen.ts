@@ -9,6 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PhotographyRouteImport } from './routes/photography'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as ItServicesRouteImport } from './routes/it-services'
@@ -21,13 +25,35 @@ import { Route as ArtRouteImport } from './routes/art'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkIndexRouteImport } from './routes/work.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogBlogIdRouteImport } from './routes/blog.$blogId'
 import { Route as AuthenticatedEmployeeRouteImport } from './routes/_authenticated/employee'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientRouteImport } from './routes/_authenticated/client'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as WorkSectorSlugRouteImport } from './routes/work.$sector.$slug'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PhotographyRoute = PhotographyRouteImport.update({
   id: '/photography',
   path: '/photography',
@@ -87,6 +113,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkIndexRoute = WorkIndexRouteImport.update({
+  id: '/work/',
+  path: '/work/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -117,6 +148,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const WorkSectorSlugRoute = WorkSectorSlugRouteImport.update({
+  id: '/work/$sector/$slug',
+  path: '/work/$sector/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,12 +166,18 @@ export interface FileRoutesByFullPath {
   '/it-services': typeof ItServicesRoute
   '/learn': typeof LearnRoute
   '/photography': typeof PhotographyRoute
+  '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/client': typeof AuthenticatedClientRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employee': typeof AuthenticatedEmployeeRoute
   '/blog/$blogId': typeof BlogBlogIdRoute
   '/blog/': typeof BlogIndexRoute
+  '/work/': typeof WorkIndexRoute
+  '/work/$sector/$slug': typeof WorkSectorSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,12 +191,18 @@ export interface FileRoutesByTo {
   '/it-services': typeof ItServicesRoute
   '/learn': typeof LearnRoute
   '/photography': typeof PhotographyRoute
+  '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/client': typeof AuthenticatedClientRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/employee': typeof AuthenticatedEmployeeRoute
   '/blog/$blogId': typeof BlogBlogIdRoute
   '/blog': typeof BlogIndexRoute
+  '/work': typeof WorkIndexRoute
+  '/work/$sector/$slug': typeof WorkSectorSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,12 +218,18 @@ export interface FileRoutesById {
   '/it-services': typeof ItServicesRoute
   '/learn': typeof LearnRoute
   '/photography': typeof PhotographyRoute
+  '/privacy': typeof PrivacyRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/client': typeof AuthenticatedClientRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/employee': typeof AuthenticatedEmployeeRoute
   '/blog/$blogId': typeof BlogBlogIdRoute
   '/blog/': typeof BlogIndexRoute
+  '/work/': typeof WorkIndexRoute
+  '/work/$sector/$slug': typeof WorkSectorSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,12 +245,18 @@ export interface FileRouteTypes {
     | '/it-services'
     | '/learn'
     | '/photography'
+    | '/privacy'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/terms'
     | '/admin'
     | '/client'
     | '/dashboard'
     | '/employee'
     | '/blog/$blogId'
     | '/blog/'
+    | '/work/'
+    | '/work/$sector/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,12 +270,18 @@ export interface FileRouteTypes {
     | '/it-services'
     | '/learn'
     | '/photography'
+    | '/privacy'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/terms'
     | '/admin'
     | '/client'
     | '/dashboard'
     | '/employee'
     | '/blog/$blogId'
     | '/blog'
+    | '/work'
+    | '/work/$sector/$slug'
   id:
     | '__root__'
     | '/'
@@ -230,12 +296,18 @@ export interface FileRouteTypes {
     | '/it-services'
     | '/learn'
     | '/photography'
+    | '/privacy'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/client'
     | '/_authenticated/dashboard'
     | '/_authenticated/employee'
     | '/blog/$blogId'
     | '/blog/'
+    | '/work/'
+    | '/work/$sector/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,12 +323,46 @@ export interface RootRouteChildren {
   ItServicesRoute: typeof ItServicesRoute
   LearnRoute: typeof LearnRoute
   PhotographyRoute: typeof PhotographyRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   BlogBlogIdRoute: typeof BlogBlogIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  WorkIndexRoute: typeof WorkIndexRoute
+  WorkSectorSlugRoute: typeof WorkSectorSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/photography': {
       id: '/photography'
       path: '/photography'
@@ -341,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/work/': {
+      id: '/work/'
+      path: '/work'
+      fullPath: '/work/'
+      preLoaderRoute: typeof WorkIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -383,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/work/$sector/$slug': {
+      id: '/work/$sector/$slug'
+      path: '/work/$sector/$slug'
+      fullPath: '/work/$sector/$slug'
+      preLoaderRoute: typeof WorkSectorSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -416,9 +536,25 @@ const rootRouteChildren: RootRouteChildren = {
   ItServicesRoute: ItServicesRoute,
   LearnRoute: LearnRoute,
   PhotographyRoute: PhotographyRoute,
+  PrivacyRoute: PrivacyRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   BlogBlogIdRoute: BlogBlogIdRoute,
   BlogIndexRoute: BlogIndexRoute,
+  WorkIndexRoute: WorkIndexRoute,
+  WorkSectorSlugRoute: WorkSectorSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
