@@ -25,7 +25,7 @@ function About() {
           occupies and the website people use. Those experiences should feel connected.
         </p>
       </section>
-      <section className="studio-container studio-section">
+      <section className="studio-container section-space">
         <div className="section-heading">
           <p className="eyebrow">WHY WE EXIST</p>
           <h2>
@@ -34,7 +34,7 @@ function About() {
             <em>Practical purpose.</em>
           </h2>
         </div>
-        <div className="service-details">
+        <div className="service-detail-grid">
           <article>
             <h3>Start with understanding</h3>
             <p>
@@ -58,7 +58,7 @@ function About() {
           </article>
         </div>
       </section>
-      <section className="studio-container studio-section founder-section">
+      <section className="studio-container section-space founder-section">
         <img
           src="https://res.cloudinary.com/iqvaoezc/image/upload/v1786283423/sumit_singh_ijwkvf.png"
           alt="Sumit Singh, founder of Sumirayan Design"
@@ -86,7 +86,7 @@ function About() {
           </a>
         </div>
       </section>
-      <section className="studio-container studio-section">
+      <section className="studio-container section-space">
         <p className="eyebrow">FOUR WAYS TO CREATE</p>
         <div className="expertise-list">
           {services.map((s) => (

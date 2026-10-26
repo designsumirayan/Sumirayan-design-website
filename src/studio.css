@@ -1448,3 +1448,5 @@ summary {
     gap: 35px;
   }
 }
+
+.service-hero > h1{margin:30px 0}.journal-card img{width:100%;aspect-ratio:16/10;object-fit:cover;margin-bottom:24px;border-radius:8px}.capability-tags > li{border:1px solid #ffffff25;padding:9px 13px;font-size:12px;list-style:none}

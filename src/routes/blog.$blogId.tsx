@@ -29,13 +29,13 @@ function Article() {
     description: p.excerpt,
     image: safeUrl(p.image_url) || undefined,
     datePublished: p.published_at,
-    author: { "@type": "Person", name: p.author_name || "Sumirayan Design" },
+    author: { "@type": p.author_name === "Sumirayan Design" ? "Organization" : "Person", name: p.author_name || "Sumirayan Design" },
     publisher: { "@type": "Organization", name: studio.name, url: studio.origin },
     mainEntityOfPage: studio.origin + "/blog/" + encodeURIComponent(p.slug || p.id),
   };
   return (
     <StudioShell>
-      <article className="studio-container studio-section article-page">
+      <article className="studio-container section-space article-page">
         <a href="/blog" className="text-link">
           ← Back to the journal
         </a>

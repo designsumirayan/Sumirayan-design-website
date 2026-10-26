@@ -32,7 +32,7 @@ export default function BrandSculpture({ paused }: { paused: boolean }) {
     <Canvas
       aria-hidden="true"
       dpr={[1, 1.5]}
-      camera={{ position: [0, 0, 6.8], fov: 42 }}
+      camera={{ position: [0, 0, 8.5], fov: 42 }}
       frameloop={paused ? "demand" : "always"}
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
     >

@@ -37,7 +37,7 @@ function Journal() {
           businesses in Patna, Bihar and beyond.
         </p>
       </section>
-      <section className="studio-container studio-section">
+      <section className="studio-container section-space">
         <label className="eyebrow" htmlFor="journal-search">
           Search the journal
         </label>
