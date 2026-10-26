@@ -1,183 +1,104 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EditorialShell } from "@/components/site/EditorialShell";
-import { 
-  GraduationCap, 
-  Briefcase, 
-  TrendingUp, 
-  Palette, 
-  PenTool, 
-  Camera,
-  Globe,
-  Video, 
-  Quote, 
-  Instagram, 
-  Facebook, 
-  Linkedin, 
-  Twitter 
-} from "lucide-react";
-
+import { StudioShell } from "@/components/site/StudioShell";
+import { services, pageHead } from "@/lib/studio";
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: "About Sumit Singh | Founder & CEO - Sumirayan Design" },
-      { name: "description", content: "Sumit Singh is a renowned artist, photographer, graphic designer, and creative visionary." },
-    ],
-  }),
-  component: AboutPage,
+  head: () =>
+    pageHead(
+      "About Our Creative Studio in Patna | Sumirayan Design",
+      "Meet Sumirayan Design: an independent creative studio in Patna bringing together branding, photography, film, art and digital experiences.",
+      "/about",
+    ),
+  component: About,
 });
-
-function AboutPage() {
-  // सोशल मीडिया लिंक्स
-  const socialLinks = [
-    { Icon: Instagram, link: "#" },
-    { Icon: Facebook, link: "#" },
-    { Icon: Linkedin, link: "#" },
-    { Icon: Twitter, link: "#" }
-  ];
-
-  // आपकी स्किल्स
-  const expertise = [
-    { name: "Digital Business Growth Strategies", Icon: TrendingUp, color: "text-blue-400" },
-    { name: "Portrait Art & Illustration", Icon: Palette, color: "text-purple-400" },
-    { name: "Graphic Design & Branding", Icon: PenTool, color: "text-pink-400" },
-    { name: "Photography, Videography", Icon: Camera, color: "text-cyan-400" },
-    { name: "Video Editing", Icon: Video, color: "text-red-400" },
-    { name: "Web & Software Development", Icon: Globe, color: "text-yellow-400" },
-  ];
-
-  // 👇 यहाँ पर अपनी प्रोफाइल फोटो का Cloudinary लिंक डालें 👇
-  const profileImageUrl = "https://res.cloudinary.com/iqvaoezc/image/upload/v1786283423/sumit_singh_ijwkvf.png"; 
-
+function About() {
   return (
-    <EditorialShell title={<span className="hidden"></span>} intro="" eyebrow="">
-      
-      {/* --- Cinematic Background Glow --- */}
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] animate-pulse pointer-events-none z-0"></div>
-      <div className="absolute bottom-40 right-1/4 w-96 h-96 bg-pink-600/10 rounded-full blur-[150px] animate-pulse delay-700 pointer-events-none z-0"></div>
-
-      <div className="max-w-7xl mx-auto px-6 pb-24 relative z-10">
-        
-        {/* --- Header Section --- */}
-        <div className="text-center max-w-3xl mx-auto mb-20 mt-10">
-          <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md text-xs font-semibold tracking-[0.2em] uppercase text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-            <Briefcase className="w-3.5 h-3.5" /> Founder & CEO
-          </div>
-          <h1 className="text-5xl md:text-7xl serif mb-6 tracking-tight text-white leading-tight">
-            Sumit Singh
-          </h1>
-          <p className="text-lg md:text-xl text-white/60 leading-relaxed">
-            Renowned artist, photographer, graphic designer, and creative visionary.
+    <StudioShell>
+      <section className="studio-container service-hero">
+        <p className="eyebrow">THE STUDIO / PATNA, BIHAR</p>
+        <h1>
+          Different disciplines.
+          <br />
+          <em>A shared point of view.</em>
+        </h1>
+        <p className="hero-description">
+          We believe a brand is experienced in many ways: in its identity, its images, the spaces it
+          occupies and the website people use. Those experiences should feel connected.
+        </p>
+      </section>
+      <section className="studio-container section-space">
+        <div className="section-heading">
+          <p className="eyebrow">WHY WE EXIST</p>
+          <h2>
+            Artistic thinking.
+            <br />
+            <em>Practical purpose.</em>
+          </h2>
+        </div>
+        <div className="service-detail-grid">
+          <article>
+            <h3>Start with understanding</h3>
+            <p>
+              We ask what your business does, who it serves and what the work needs to achieve. That
+              context shapes the creative direction.
+            </p>
+          </article>
+          <article>
+            <h3>Make the parts work together</h3>
+            <p>
+              Design, production, art and technology inform one another. A campaign image should fit
+              the brand; a website should help someone take the next step.
+            </p>
+          </article>
+          <article>
+            <h3>Build for real use</h3>
+            <p>
+              We discuss formats, delivery, ownership and handover as part of the brief. The aim is
+              work your team can use confidently.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section className="studio-container section-space founder-section">
+        <img
+          src="https://res.cloudinary.com/iqvaoezc/image/upload/v1786283423/sumit_singh_ijwkvf.png"
+          alt="Sumit Singh, founder of Sumirayan Design"
+          loading="lazy"
+        />
+        <div>
+          <p className="eyebrow">FOUNDER</p>
+          <h2>
+            Meet
+            <br />
+            <em>Sumit Singh.</em>
+          </h2>
+          <p>
+            Artist, photographer and graphic designer, Sumit brings a visual arts perspective to the
+            studio's creative work. His practice connects image-making with the everyday needs of
+            brands and businesses.
           </p>
+          <p>
+            Based in Patna, the studio works across four complementary disciplines. We bring the
+            right combination to each brief, from an individual artwork to a connected brand
+            experience.
+          </p>
+          <a className="text-link" href="/contact">
+            Start a conversation ↗
+          </a>
         </div>
-
-        {/* --- Main Content Grid (Sticky Layout) --- */}
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-start">
-          
-          {/* Left Column: Sticky Profile Image */}
-          <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-8">
-            <div className="relative group rounded-[2.5rem] overflow-hidden border border-white/10 bg-white/5 p-2 shadow-2xl transition-all duration-500 hover:border-blue-500/30 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)]">
-              <div className="rounded-[2rem] overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 pointer-events-none"></div>
-                {/* Profile Image with Download Protection */}
-                <img 
-                  src={profileImageUrl} 
-                  alt="Sumit Singh" 
-                  className="w-full h-auto object-cover aspect-[4/5] group-hover:scale-105 transition-transform duration-700 ease-out"
-                  onContextMenu={(e) => e.preventDefault()}
-                  draggable="false"
-                />
-              </div>
-            </div>
-
-            {/* Social Links with Hover & Touch Motion */}
-            <div className="flex justify-center gap-4">
-              {socialLinks.map((social, i) => {
-                const IconComponent = social.Icon;
-                return (
-                  <a 
-                    key={i}
-                    href={social.link} 
-                    className="w-12 h-12 rounded-full border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_10px_20px_-10px_rgba(255,255,255,0.2)] transition-all duration-300 active:scale-90"
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right Column: Bio & Details */}
-          <div className="lg:col-span-7 space-y-12">
-            
-            {/* Quote Section */}
-            <div className="relative p-8 md:p-10 rounded-3xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-xl overflow-hidden group hover:border-blue-500/30 transition-colors duration-500 active:scale-[0.99]">
-              <Quote className="absolute -right-6 -bottom-6 w-32 h-32 text-white/[0.03] rotate-12 group-hover:text-blue-500/[0.05] transition-colors duration-500" />
-              <p className="relative z-10 text-2xl md:text-3xl serif italic text-white/90 leading-relaxed font-light">
-                "A perfect blend of artistic excellence and modern digital innovation."
-              </p>
-            </div>
-
-            {/* Biography Text */}
-            <div className="space-y-6 text-white/70 text-lg leading-relaxed font-light">
-              <p>
-                Sumit Singh is a renowned artist, photographer, graphic designer, and creative visionary known for his exceptional multi-dimensional talent in the world of art and digital media. His expertise spans across pencil and digital sketching, graphic designing, photography, video editing, branding, and digital business growth strategies.
-              </p>
-              <p>
-                Particularly admired for his portrait art and creative illustrations, his work reflects a deep understanding of aesthetics and storytelling. Throughout his professional journey, he has worked with various companies as a graphic designer and flourished as a freelancer, delivering high-quality work in commercial painting, digital marketing, and logo design.
-              </p>
-              <p>
-                Apart from his artistic expertise, his photography skills are highly appreciated for capturing emotions, stories, and aesthetics with remarkable creativity.
-              </p>
-            </div>
-
-            {/* Education & Entrepreneurship Cards */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/50 hover:bg-white/[0.04] md:hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(59,130,246,0.15)] active:scale-[0.98] transition-all duration-500">
-                <GraduationCap className="w-8 h-8 text-blue-400 mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-4">Education</h3>
-                <ul className="space-y-3 text-sm text-white/60">
-                  <li><strong className="text-white/90 font-medium">MFA</strong> — Banaras Hindu University (BHU)</li>
-                  <li><strong className="text-white/90 font-medium">BFA</strong> — College of Arts & Crafts, Patna University</li>
-                </ul>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-pink-500/50 hover:bg-white/[0.04] md:hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(236,72,153,0.15)] active:scale-[0.98] transition-all duration-500">
-                <Briefcase className="w-8 h-8 text-pink-400 mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-4">Entrepreneurship</h3>
-                <p className="text-sm text-white/60 leading-relaxed">
-                  Founded <strong className="text-white/90 font-medium">Sumirayan Design Pvt. Ltd.</strong> in 2024. Actively guiding businesses, startups, and leaders in building impactful digital identities.
-                </p>
-              </div>
-            </div>
-
-            {/* Core Expertise Pills */}
-            <div className="pt-6">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-white/40 mb-6">Core Expertise</h3>
-              <div className="flex flex-wrap gap-3">
-                {expertise.map((skill, index) => {
-                  const IconComponent = skill.Icon;
-                  return (
-                    <div 
-                      key={index}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 hover:border-white/30 text-sm text-white/80 hover:text-white transition-all duration-300 cursor-default active:scale-95"
-                    >
-                      <IconComponent className={`w-4 h-4 ${skill.color}`} />
-                      {skill.name}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="pt-8 border-t border-white/10">
-              <p className="text-lg text-white/80 leading-relaxed font-light">
-                With his visionary approach, creative excellence, and deep understanding of digital growth, Sumit Singh continues to inspire and transform brands through innovation and artistic brilliance.
-              </p>
-            </div>
-
-          </div>
+      </section>
+      <section className="studio-container section-space">
+        <p className="eyebrow">FOUR WAYS TO CREATE</p>
+        <div className="expertise-list">
+          {services.map((s) => (
+            <a className="expertise-row" key={s.key} href={s.path}>
+              <span>{s.number}</span>
+              <h3>{s.name}</h3>
+              <p>{s.label}</p>
+              <span>↗</span>
+            </a>
+          ))}
         </div>
-      </div>
-    </EditorialShell>
+      </section>
+    </StudioShell>
   );
 }

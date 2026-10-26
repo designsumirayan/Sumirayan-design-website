@@ -10,19 +10,35 @@ const serverPublic = () =>
   });
 
 async function assertAdmin(ctx: { supabase: ReturnType<typeof serverPublic>; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden");
 }
 
 // ── DESIGN ─────────────────────────────────────────────────────────────
 export const publicDesignItems = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("design_items").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("design_items")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const designSchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(180)
+    .optional()
+    .nullable(),
+  gallery_images: z.array(z.string().url().max(1000)).max(30).optional(),
+  seo_title: z.string().max(100).optional().nullable(),
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   category: z.string().min(2).max(80),
   cover_image: z.string().url().max(1000),
@@ -35,17 +51,25 @@ const designSchema = z.object({
 
 export const adminCreateDesign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => designSchema.parse(d))
+  .validator((d) => designSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("design_items").insert({ ...data, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("design_items");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteDesign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("design_items").delete().eq("id", data.id);
@@ -55,12 +79,27 @@ export const adminDeleteDesign = createServerFn({ method: "POST" })
 
 // ── PHOTOGRAPHY ────────────────────────────────────────────────────────
 export const publicPhotographyItems = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("photography_items").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("photography_items")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const photoSchema = z.object({
+  category: z.string().trim().max(80).optional().nullable(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(180)
+    .optional()
+    .nullable(),
+  gallery_images: z.array(z.string().url().max(1000)).max(30).optional(),
+  seo_title: z.string().max(100).optional().nullable(),
+  client: z.string().max(160).optional().nullable(),
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   location: z.string().max(160).optional().nullable(),
   cover_image: z.string().url().max(1000),
@@ -71,17 +110,25 @@ const photoSchema = z.object({
 
 export const adminCreatePhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => photoSchema.parse(d))
+  .validator((d) => photoSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("photography_items").insert({ ...data, captured_at: data.captured_at || null, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("photography_items");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeletePhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("photography_items").delete().eq("id", data.id);
@@ -91,12 +138,27 @@ export const adminDeletePhoto = createServerFn({ method: "POST" })
 
 // ── ART ───────────────────────────────────────────────────────────────
 export const publicArtItems = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("art_items").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("art_items")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const artSchema = z.object({
+  category: z.string().trim().max(80).optional().nullable(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(180)
+    .optional()
+    .nullable(),
+  gallery_images: z.array(z.string().url().max(1000)).max(30).optional(),
+  seo_title: z.string().max(100).optional().nullable(),
+  client: z.string().max(160).optional().nullable(),
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   medium: z.string().max(160).optional().nullable(),
   cover_image: z.string().url().max(1000),
@@ -110,17 +172,25 @@ const artSchema = z.object({
 
 export const adminCreateArt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => artSchema.parse(d))
+  .validator((d) => artSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("art_items").insert({ ...data, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("art_items");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteArt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("art_items").delete().eq("id", data.id);
@@ -130,12 +200,17 @@ export const adminDeleteArt = createServerFn({ method: "POST" })
 
 // ── LEARN ─────────────────────────────────────────────────────────────
 export const publicLearnCourses = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("learn_courses").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("learn_courses")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const learnSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   cover_image: z.string().url().max(1000),
   summary: z.string().min(5).max(600),
@@ -149,17 +224,25 @@ const learnSchema = z.object({
 
 export const adminCreateLearn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => learnSchema.parse(d))
+  .validator((d) => learnSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("learn_courses").insert({ ...data, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("learn_courses");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteLearn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("learn_courses").delete().eq("id", data.id);
@@ -169,12 +252,17 @@ export const adminDeleteLearn = createServerFn({ method: "POST" })
 
 // ── EVENTS ────────────────────────────────────────────────────────────
 export const publicEvents = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("event_items").select("*").order("sort_order").order("starts_at", { ascending: true });
+  const { data, error } = await serverPublic()
+    .from("event_items")
+    .select("*")
+    .order("sort_order")
+    .order("starts_at", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const eventSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   cover_image: z.string().url().max(1000),
   description: z.string().max(2000).optional().nullable(),
@@ -189,22 +277,26 @@ const eventSchema = z.object({
 
 export const adminCreateEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => eventSchema.parse(d))
+  .validator((d) => eventSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("event_items").insert({
-      ...data,
-      starts_at: data.starts_at || null,
-      ends_at: data.ends_at || null,
-      created_by: context.userId,
-    }).select().single();
+    const { error, data: row } = await context.supabase
+      .from("event_items")
+      .insert({
+        ...data,
+        starts_at: data.starts_at || null,
+        ends_at: data.ends_at || null,
+        created_by: context.userId,
+      })
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("event_items").delete().eq("id", data.id);
@@ -214,12 +306,17 @@ export const adminDeleteEvent = createServerFn({ method: "POST" })
 
 // ── CAREERS ───────────────────────────────────────────────────────────
 export const publicCareers = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("career_positions").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("career_positions")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const careerSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   department: z.string().max(120).optional().nullable(),
   location: z.string().max(120).optional().nullable(),
@@ -233,17 +330,25 @@ const careerSchema = z.object({
 
 export const adminCreateCareer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => careerSchema.parse(d))
+  .validator((d) => careerSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("career_positions").insert({ ...data, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("career_positions");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteCareer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("career_positions").delete().eq("id", data.id);
@@ -253,12 +358,28 @@ export const adminDeleteCareer = createServerFn({ method: "POST" })
 
 // ── IT SERVICES ───────────────────────────────────────────────────────
 export const publicItServices = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await serverPublic().from("it_services").select("*").order("sort_order").order("created_at", { ascending: false });
+  const { data, error } = await serverPublic()
+    .from("it_services")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
 });
 
 const itSchema = z.object({
+  project_url: z.string().url().max(1000).optional().nullable(),
+  category: z.string().trim().max(80).optional().nullable(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(180)
+    .optional()
+    .nullable(),
+  gallery_images: z.array(z.string().url().max(1000)).max(30).optional(),
+  seo_title: z.string().max(100).optional().nullable(),
+  client: z.string().max(160).optional().nullable(),
+  id: z.string().uuid().optional(),
   title: z.string().min(2).max(180),
   icon: z.string().max(60).default("Sparkles"),
   summary: z.string().min(5).max(600),
@@ -270,17 +391,25 @@ const itSchema = z.object({
 
 export const adminCreateItService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => itSchema.parse(d))
+  .validator((d) => itSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error, data: row } = await context.supabase.from("it_services").insert({ ...data, created_by: context.userId }).select().single();
+    const { id, ...payload } = data;
+    const query = context.supabase.from("it_services");
+    const { error, data: row } = await (
+      id
+        ? query.update(payload).eq("id", id)
+        : query.insert({ ...payload, created_by: context.userId })
+    )
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
 
 export const adminDeleteItService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("it_services").delete().eq("id", data.id);

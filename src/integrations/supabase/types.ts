@@ -10,51 +10,66 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
       art_items: {
         Row: {
+          category: string | null
+          client: string | null
           cover_image: string
           created_at: string
           created_by: string | null
           description: string | null
           dimensions: string | null
           for_sale: boolean
+          gallery_images: string[] | null
           id: string
           medium: string | null
           price: number | null
+          seo_title: string | null
+          slug: string | null
           sort_order: number
           title: string
           updated_at: string
           year: number | null
         }
         Insert: {
+          category?: string | null
+          client?: string | null
           cover_image: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           dimensions?: string | null
           for_sale?: boolean
+          gallery_images?: string[] | null
           id?: string
           medium?: string | null
           price?: number | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title: string
           updated_at?: string
           year?: number | null
         }
         Update: {
+          category?: string | null
+          client?: string | null
           cover_image?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           dimensions?: string | null
           for_sale?: boolean
+          gallery_images?: string[] | null
           id?: string
           medium?: string | null
           price?: number | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -64,47 +79,68 @@ export type Database = {
       }
       blog_posts: {
         Row: {
+          author_bio: string | null
           author_name: string
           category: string
           content: string
           created_at: string
           created_by: string | null
           excerpt: string
+          focus_keywords: string | null
           id: string
+          image_alt: string | null
           image_url: string
+          og_image: string | null
           published_at: string
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           status: Database["public"]["Enums"]["blog_status"]
+          tags: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          author_bio?: string | null
           author_name?: string
           category: string
           content: string
           created_at?: string
           created_by?: string | null
           excerpt: string
+          focus_keywords?: string | null
           id?: string
+          image_alt?: string | null
           image_url: string
+          og_image?: string | null
           published_at?: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          author_bio?: string | null
           author_name?: string
           category?: string
           content?: string
           created_at?: string
           created_by?: string | null
           excerpt?: string
+          focus_keywords?: string | null
           id?: string
+          image_alt?: string | null
           image_url?: string
+          og_image?: string | null
           published_at?: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string | null
           title?: string
           updated_at?: string
         }
@@ -193,8 +229,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          gallery_images: string[] | null
           id: string
           project_url: string | null
+          seo_title: string | null
+          slug: string | null
           sort_order: number
           title: string
           updated_at: string
@@ -207,8 +246,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          gallery_images?: string[] | null
           id?: string
           project_url?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title: string
           updated_at?: string
@@ -221,8 +263,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          gallery_images?: string[] | null
           id?: string
           project_url?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -283,39 +328,57 @@ export type Database = {
       }
       it_services: {
         Row: {
+          category: string | null
+          client: string | null
           cover_image: string | null
           created_at: string
           created_by: string | null
           description: string | null
           features: Json
+          gallery_images: string[] | null
           icon: string
           id: string
+          project_url: string | null
+          seo_title: string | null
+          slug: string | null
           sort_order: number
           summary: string
           title: string
           updated_at: string
         }
         Insert: {
+          category?: string | null
+          client?: string | null
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           features?: Json
+          gallery_images?: string[] | null
           icon?: string
           id?: string
+          project_url?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           summary: string
           title: string
           updated_at?: string
         }
         Update: {
+          category?: string | null
+          client?: string | null
           cover_image?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           features?: Json
+          gallery_images?: string[] | null
           icon?: string
           id?: string
+          project_url?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           summary?: string
           title?: string
@@ -404,36 +467,51 @@ export type Database = {
       photography_items: {
         Row: {
           captured_at: string | null
+          category: string | null
+          client: string | null
           cover_image: string
           created_at: string
           created_by: string | null
           description: string | null
+          gallery_images: string[] | null
           id: string
           location: string | null
+          seo_title: string | null
+          slug: string | null
           sort_order: number
           title: string
           updated_at: string
         }
         Insert: {
           captured_at?: string | null
+          category?: string | null
+          client?: string | null
           cover_image: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          gallery_images?: string[] | null
           id?: string
           location?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title: string
           updated_at?: string
         }
         Update: {
           captured_at?: string | null
+          category?: string | null
+          client?: string | null
           cover_image?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          gallery_images?: string[] | null
           id?: string
           location?: string | null
+          seo_title?: string | null
+          slug?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -691,12 +769,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -720,11 +798,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -745,11 +823,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -770,11 +848,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -787,11 +865,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

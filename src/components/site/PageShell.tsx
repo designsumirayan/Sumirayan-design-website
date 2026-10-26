@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Scene3D } from "@/components/three/Scene3D";
 import { GlobalHeader } from "@/components/site/GlobalHeader";
 import { Footer } from "@/components/landing/Footer";
 
@@ -16,7 +15,6 @@ export function PageShell({
 }) {
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-white">
-      <Scene3D className="opacity-30" />
       <GlobalHeader />
 
       <section className="relative mx-auto max-w-7xl px-6 pt-32 pb-12 md:pt-36 md:pb-16">
@@ -27,7 +25,7 @@ export function PageShell({
         {intro && <p className="mt-6 max-w-2xl text-white/70 text-lg">{intro}</p>}
       </section>
 
-      <main className="relative mx-auto max-w-7xl px-6 pb-24">{children}</main>
+      <main id="main-content" className="relative mx-auto max-w-7xl px-6 pb-24">{children}</main>
 
       <Footer />
     </div>
