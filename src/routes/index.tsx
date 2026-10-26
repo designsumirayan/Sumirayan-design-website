@@ -248,6 +248,11 @@ function Home() {
             </p>
           </div>
         </section>
+        <section className="studio-container section-space faq-grid"><div><p className="eyebrow">CHOOSING A CREATIVE PARTNER</p><h2>Good questions.<br/><em>Clear answers.</em></h2></div><div>
+<details className="studio-faq"><summary>How do I choose the best advertising agency in Patna?<span>+</span></summary><p>Look for relevant work, a clear understanding of your audience, an agreed scope and a transparent review process. Ask who will handle your project, what the deliverables include and how success will be assessed. Explore our work and talk to us about whether we are the right fit.</p></details>
+<details className="studio-faq"><summary>Can one team handle design, photography and a website?<span>+</span></summary><p>Our four disciplines can be combined around one project brief. We plan the brand identity, visual production and digital experience together, with a scope and schedule agreed before work starts.</p></details>
+<details className="studio-faq"><summary>Do you work with businesses across Bihar?<span>+</span></summary><p>We are based in Patna and discuss projects across Bihar and India. Design and digital work can be coordinated remotely; shoots and on-site artwork are planned around location, travel and permissions.</p></details>
+</div></section>
       </main>
       <Footer />
     </div>

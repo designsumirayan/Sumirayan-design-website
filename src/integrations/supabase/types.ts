@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       art_items: {
         Row: {
+          category: string | null
           client: string | null
           cover_image: string
           created_at: string
@@ -35,6 +36,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          category?: string | null
           client?: string | null
           cover_image: string
           created_at?: string
@@ -54,6 +56,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          category?: string | null
           client?: string | null
           cover_image?: string
           created_at?: string
@@ -325,6 +328,7 @@ export type Database = {
       }
       it_services: {
         Row: {
+          category: string | null
           client: string | null
           cover_image: string | null
           created_at: string
@@ -334,6 +338,7 @@ export type Database = {
           gallery_images: string[] | null
           icon: string
           id: string
+          project_url: string | null
           seo_title: string | null
           slug: string | null
           sort_order: number
@@ -342,6 +347,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           client?: string | null
           cover_image?: string | null
           created_at?: string
@@ -351,6 +357,7 @@ export type Database = {
           gallery_images?: string[] | null
           icon?: string
           id?: string
+          project_url?: string | null
           seo_title?: string | null
           slug?: string | null
           sort_order?: number
@@ -359,6 +366,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           client?: string | null
           cover_image?: string | null
           created_at?: string
@@ -368,6 +376,7 @@ export type Database = {
           gallery_images?: string[] | null
           icon?: string
           id?: string
+          project_url?: string | null
           seo_title?: string | null
           slug?: string | null
           sort_order?: number
@@ -458,6 +467,7 @@ export type Database = {
       photography_items: {
         Row: {
           captured_at: string | null
+          category: string | null
           client: string | null
           cover_image: string
           created_at: string
@@ -474,6 +484,7 @@ export type Database = {
         }
         Insert: {
           captured_at?: string | null
+          category?: string | null
           client?: string | null
           cover_image: string
           created_at?: string
@@ -490,6 +501,7 @@ export type Database = {
         }
         Update: {
           captured_at?: string | null
+          category?: string | null
           client?: string | null
           cover_image?: string
           created_at?: string

@@ -51,7 +51,7 @@ const designSchema = z.object({
 
 export const adminCreateDesign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => designSchema.parse(d))
+  .validator((d) => designSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -69,7 +69,7 @@ export const adminCreateDesign = createServerFn({ method: "POST" })
 
 export const adminDeleteDesign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("design_items").delete().eq("id", data.id);
@@ -89,6 +89,7 @@ export const publicPhotographyItems = createServerFn({ method: "GET" }).handler(
 });
 
 const photoSchema = z.object({
+  category: z.string().trim().max(80).optional().nullable(),
   slug: z
     .string()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -109,7 +110,7 @@ const photoSchema = z.object({
 
 export const adminCreatePhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => photoSchema.parse(d))
+  .validator((d) => photoSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -127,7 +128,7 @@ export const adminCreatePhoto = createServerFn({ method: "POST" })
 
 export const adminDeletePhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("photography_items").delete().eq("id", data.id);
@@ -147,6 +148,7 @@ export const publicArtItems = createServerFn({ method: "GET" }).handler(async ()
 });
 
 const artSchema = z.object({
+  category: z.string().trim().max(80).optional().nullable(),
   slug: z
     .string()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -170,7 +172,7 @@ const artSchema = z.object({
 
 export const adminCreateArt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => artSchema.parse(d))
+  .validator((d) => artSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -188,7 +190,7 @@ export const adminCreateArt = createServerFn({ method: "POST" })
 
 export const adminDeleteArt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("art_items").delete().eq("id", data.id);
@@ -222,7 +224,7 @@ const learnSchema = z.object({
 
 export const adminCreateLearn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => learnSchema.parse(d))
+  .validator((d) => learnSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -240,7 +242,7 @@ export const adminCreateLearn = createServerFn({ method: "POST" })
 
 export const adminDeleteLearn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("learn_courses").delete().eq("id", data.id);
@@ -275,7 +277,7 @@ const eventSchema = z.object({
 
 export const adminCreateEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => eventSchema.parse(d))
+  .validator((d) => eventSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error, data: row } = await context.supabase
@@ -294,7 +296,7 @@ export const adminCreateEvent = createServerFn({ method: "POST" })
 
 export const adminDeleteEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("event_items").delete().eq("id", data.id);
@@ -328,7 +330,7 @@ const careerSchema = z.object({
 
 export const adminCreateCareer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => careerSchema.parse(d))
+  .validator((d) => careerSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -346,7 +348,7 @@ export const adminCreateCareer = createServerFn({ method: "POST" })
 
 export const adminDeleteCareer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("career_positions").delete().eq("id", data.id);
@@ -366,6 +368,8 @@ export const publicItServices = createServerFn({ method: "GET" }).handler(async 
 });
 
 const itSchema = z.object({
+  project_url: z.string().url().max(1000).optional().nullable(),
+  category: z.string().trim().max(80).optional().nullable(),
   slug: z
     .string()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -387,7 +391,7 @@ const itSchema = z.object({
 
 export const adminCreateItService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => itSchema.parse(d))
+  .validator((d) => itSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...payload } = data;
@@ -405,7 +409,7 @@ export const adminCreateItService = createServerFn({ method: "POST" })
 
 export const adminDeleteItService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("it_services").delete().eq("id", data.id);

@@ -61,7 +61,7 @@ export const getCatalogue = createServerFn({ method: "GET" }).handler(async () =
   return results.flat();
 });
 export const getProject = createServerFn({ method: "GET" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         sector: z.enum(["design", "photography", "art", "it"]),

@@ -1530,6 +1530,7 @@ const PORTFOLIO_KINDS: {
     description: "Commercial shoots, events, and cinematic films.",
     metaFields: ["category", "client", "location"],
     fields: [
+ {name:"category",label:"Category",placeholder:"Product photography / Brand film / Event",halfWidth:true},
       { name: "title", label: "Shoot / Event Title *", required: true },
       { name: "client", label: "Client / Couple Name", halfWidth: true },
       { name: "cover_image", label: "Cover Thumbnail URL *", type: "url", required: true },
@@ -1557,6 +1558,7 @@ const PORTFOLIO_KINDS: {
     description: "Physical artworks, murals, and installations.",
     metaFields: ["medium", "year", "for_sale"],
     fields: [
+ {name:"category",label:"Category",placeholder:"Mural / Portrait / Canvas",halfWidth:true},
       { name: "title", label: "Artwork Collection Name *", required: true },
       { name: "client", label: "Commissioned by (optional)", halfWidth: true },
       { name: "cover_image", label: "Cover Image URL *", type: "url", required: true },
@@ -1590,6 +1592,8 @@ const PORTFOLIO_KINDS: {
     description: "Software development, CRM, and SEO case studies.",
     metaFields: ["category", "client"],
     fields: [
+ {name:"category",label:"Category",placeholder:"Website / Software / SEO",halfWidth:true},
+ {name:"project_url",label:"Live project URL",type:"url",halfWidth:true},
       { name: "title", label: "Project Title *", required: true },
       { name: "client", label: "Client Name", halfWidth: true },
       { name: "cover_image", label: "Cover Image URL *", type: "url", required: true },

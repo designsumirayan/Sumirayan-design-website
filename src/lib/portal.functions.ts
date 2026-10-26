@@ -55,7 +55,7 @@ const createTaskSchema = z.object({
 
 export const adminCreateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => createTaskSchema.parse(d))
+  .validator((d) => createTaskSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.assigned_to) {
@@ -92,7 +92,7 @@ export const adminCreateTask = createServerFn({ method: "POST" })
 // ─── Admin: delete task ─────────────────────────────────────────────────────
 export const adminDeleteTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("tasks").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -111,7 +111,7 @@ const taskStatusEnum = z.enum([
 
 export const adminUpdateTaskStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
+  .validator((d) =>
     z
       .object({
         id: z.string().uuid(),
@@ -141,7 +141,7 @@ const roleEnum = z.enum(["admin", "employee", "client"]);
 
 export const adminAssignRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(d))
+  .validator((d) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("user_roles")
@@ -158,7 +158,7 @@ export const adminAssignRole = createServerFn({ method: "POST" })
 
 export const adminRemoveRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(d))
+  .validator((d) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("user_roles")
@@ -214,7 +214,7 @@ export const adminMonthlyPerformance = createServerFn({ method: "GET" })
 // ─── Admin: delete contact message ──────────────────────────────────────────
 export const adminDeleteContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("contact_messages").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -260,7 +260,7 @@ export const publicBlogPosts = createServerFn({ method: "GET" }).handler(async (
 
 export const adminCreateBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => blogSchema.parse(d))
+  .validator((d) => blogSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { data: allowed, error: roleError } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -295,7 +295,7 @@ export const adminCreateBlogPost = createServerFn({ method: "POST" })
 
 export const adminDeleteBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("blog_posts").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -321,7 +321,7 @@ export const myTasks = createServerFn({ method: "GET" })
 // ─── Employee: update status ────────────────────────────────────────────────
 export const updateTaskStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
+  .validator((d) =>
     z
       .object({
         id: z.string().uuid(),
@@ -365,7 +365,7 @@ export const myNotifications = createServerFn({ method: "GET" })
 
 // ─── Public contact form ────────────────────────────────────────────────────
 export const submitContact = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
+  .validator((d) =>
     z
       .object({
         name: z.string().min(1).max(120),
@@ -383,7 +383,7 @@ export const submitContact = createServerFn({ method: "POST" })
   });
 
 export const publicBlogPost = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ slug: z.string().min(1).max(200) }).parse(input))
+  .validator((input) => z.object({ slug: z.string().min(1).max(200) }).parse(input))
   .handler(async ({ data }) => {
     const db = createClient<Database>(
       process.env.SUPABASE_URL!,
